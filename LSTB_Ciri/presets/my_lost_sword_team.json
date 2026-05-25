@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "title": "My Lost Sword Team",
+  "slotData": [
+    {
+      "character": null,
+      "gear": {
+        "Weapon": null,
+        "Armor": null,
+        "Helmet": null,
+        "Rune": null
+      },
+      "card": null
+    },
+    {
+      "character": null,
+      "gear": {
+        "Weapon": null,
+        "Armor": null,
+        "Helmet": null,
+        "Rune": null
+      },
+      "card": null
+    },
+    {
+      "character": null,
+      "gear": {
+        "Weapon": null,
+        "Armor": null,
+        "Helmet": null,
+        "Rune": null
+      },
+      "card": null
+    },
+    {
+      "character": null,
+      "gear": {
+        "Weapon": null,
+        "Armor": null,
+        "Helmet": null,
+        "Rune": null
+      },
+      "card": null
+    },
+    {
+      "character": null,
+      "gear": {
+        "Weapon": null,
+        "Armor": null,
+        "Helmet": null,
+        "Rune": null
+      },
+      "card": null
+    }
+  ],
+  "petsData": [
+    {
+      "name": null,
+      "gems": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": null,
+      "gems": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": null,
+      "gems": [
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "formationSlots": [
+    1,
+    3,
+    4,
+    0,
+    2,
+    -1
+  ]
+}
