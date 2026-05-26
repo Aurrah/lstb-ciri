@@ -33,7 +33,7 @@
             margin: 0 auto;
         }
 
-        .slot-squircle { width: 75px; height: 75px; border-radius: 0.5rem; transition: all 0.2s ease; padding: 0 !important; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .slot-squircle { width: 65px; height: 65px; border-radius: 0.5rem; transition: all 0.2s ease; padding: 0 !important; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .slot-squircle:hover { border-color: #4b6bfb; background-color: #2a2d44; }
         .gear-display, .card-display { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0.25rem; box-sizing: border-box; }
         .gear-display span, .card-display span { word-break: break-word; text-align: center; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -110,6 +110,82 @@
         #fbtn-position-Forward.active  { border-color: #f87171; background: #1a0a0a; }
         #fbtn-position-Center.active { border-color: #fbbf24; background: #1a1505; }
         #fbtn-position-Backward.active   { border-color: #60a5fa; background: #0c1626; }
+
+        /* ── Ultimate Rotation ── */
+        .ult-rotation-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .ult-char-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.5rem;
+            background: #20222f;
+            border: 2px solid #2d3142;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .ult-char-icon:hover {
+            border-color: #4b6bfb;
+            background: #1e2240;
+        }
+        .ult-char-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            image-rendering: -webkit-optimize-contrast;
+        }
+        .ult-char-icon.empty {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ult-char-icon.empty::before {
+            content: '+';
+            font-size: 28px;
+            color: #475569;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .ult-char-icon.empty:hover::before {
+            color: #64748b;
+        }
+        .ult-time-input {
+            width: 60px;
+            padding: 4px 6px;
+            background: #1a1c26;
+            border: 1px solid #2d3142;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #e2e8f0;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .ult-time-input:hover {
+            border-color: #4b6bfb;
+        }
+        .ult-time-input:focus {
+            outline: none;
+            border-color: #4b6bfb;
+            background: #21243a;
+        }
+        .ult-arrow {
+            margin-top: 12px;
+            color: #475569;
+            font-size: 18px;
+            font-weight: 700;
+        }
 
         /* ── Battle Stats Panel ── */
         #battle-stats-panel {
@@ -411,10 +487,17 @@
                 </div>
             </div>
 
-            <!-- Notes / Rotation — full width -->
-            <div class="border-t border-borderCool pt-4 flex flex-col gap-2">
-                <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Notes / Rotation</h3>
-                <textarea class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-accentBlue resize-y min-h-[80px]" placeholder="Add your team notes, strategy, skill rotation, etc..."></textarea>
+            <!-- Ultimate Rotation — full width -->
+            <div class="border-t border-borderCool pt-4 flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Ultimate Rotation</h3>
+                    <button onclick="resetUltimateRotation()" class="text-xs text-slate-400 hover:text-slate-200 transition px-2 py-1 rounded border border-slate-700 hover:border-slate-500" title="Reset all rotation slots">
+                        <i class="fa-solid fa-redo mr-1"></i>Reset
+                    </button>
+                </div>
+                <div id="ultimate-rotation-container" class="flex items-start gap-2 pb-2 overflow-x-auto">
+                    <!-- Rotation slots will be generated here -->
+                </div>
             </div>
         </section>
 
@@ -780,7 +863,7 @@
     }
 </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2.5">
                         ${categories.map(cat => `
                             <div class="slot-squircle bg-slotBg border border-slate-700 flex flex-col items-center justify-center cursor-pointer p-1" onclick="openModal('${index}', 'gear', '${cat}')">
                                 <div id="gear-display-${index}-${cat}" class="gear-display">
@@ -1418,6 +1501,14 @@
                     
                     renderModalGrid(filteredItems, false);
                 }
+            } else if (type === 'ultimate') {
+                // For ultimate rotation, only show characters currently in the team
+                const teamCharacters = slotData
+                    .map(slot => slot.character)
+                    .filter(char => char !== null && char !== undefined);
+                const allCharacters = db.characters || [];
+                const filteredItems = allCharacters.filter(char => teamCharacters.includes(char.name));
+                renderModalGrid(filteredItems, false);
             } else if (type === 'card') {
                 renderModalGrid(db.cards, false);
             } else if (type === 'pet') {
@@ -1445,6 +1536,21 @@
             `;
             grid.appendChild(noneBox);
             // ────────────────────────────────────────────────────
+
+            // Add x2 repeat tile when selecting an ultimate rotation item
+            if (currentActiveCategory === 'ultimate') {
+                const x2Box = document.createElement('div');
+                x2Box.className = "item-card bg-[#1a1c28] border border-dashed border-slate-600 rounded-lg p-1.5 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-[#0c1626] transition-all";
+                x2Box.style.cssText = 'aspect-ratio:3/4;';
+                x2Box.onclick = () => selectUltimateX2();
+                x2Box.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center gap-1.5" style="min-height:60px">
+                        <span style="font-size:24px;font-weight:700;color:#60a5fa;">x2</span>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-400 text-center leading-tight w-full truncate">Repeat</span>
+                `;
+                grid.appendChild(x2Box);
+            }
 
             items.forEach(item => {
                 const isPet = !isChar && currentActiveCategory === 'pet';
@@ -1568,9 +1674,22 @@
                     // Validate this specific gem slot to ensure it's compatible with the pet
                     validatePetGems(petIdx);
                 }
+            } else if (currentActiveCategory === 'ultimate') {
+                // Allow duplicates in ultimate rotation - no clearing needed
+                ultimateRotation[currentActiveSection].character = item.name;
+                ultimateRotation[currentActiveSection].time = ultimateRotation[currentActiveSection].time || '';
+                renderUltimateRotation();
             }
             renderTeamGrid();
             if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
+            closeModal();
+        }
+
+        function selectUltimateX2() {
+            if (typeof currentActiveSection !== 'number') return;
+            ultimateRotation[currentActiveSection].character = 'x2';
+            ultimateRotation[currentActiveSection].time = '';
+            renderUltimateRotation();
             closeModal();
         }
 
@@ -1592,6 +1711,9 @@
                 if (match) {
                     petsData[parseInt(match[1])].gems[parseInt(match[2])] = null;
                 }
+            } else if (currentActiveCategory === 'ultimate') {
+                ultimateRotation[currentActiveSection].character = null;
+                renderUltimateRotation();
             }
             renderTeamGrid();
             if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
@@ -1678,10 +1800,12 @@
                 { name: null, gems: [null, null, null, null] }
             ];
             formationSlots = [1, 3, 4, 0, 2, -1];
+            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
             const titleEl = document.querySelector('h1[contenteditable]');
             if (titleEl) titleEl.innerText = 'My Lost Sword Team';
             renderTeamGrid();
             setupFormationDragDrop();
+            renderUltimateRotation();
             // Also clear damage dealt graph
             if (typeof clearBattleStats === 'function') clearBattleStats();
         }
@@ -1689,6 +1813,103 @@
         // Initialize
         renderTeamGrid();
         setupFormationDragDrop();
+
+        // Initialize Ultimate Rotation
+        let ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+        renderUltimateRotation();
+
+        function renderUltimateRotation() {
+            const container = document.getElementById('ultimate-rotation-container');
+            if (!container) return;
+            
+            // Find the x2 marker (repeat slot)
+            const repeatIdx = ultimateRotation.findIndex(slot => slot.character === 'x2');
+            
+            container.innerHTML = '';
+            ultimateRotation.forEach((slot, idx) => {
+                // Hide slots after the repeat marker
+                if (repeatIdx !== -1 && idx > repeatIdx) return;
+                
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'ult-rotation-slot';
+                
+                // Character icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'ult-char-icon' + (slot.character ? '' : ' empty');
+                iconDiv.style.cursor = 'pointer';
+                iconDiv.onclick = () => selectUltimateCharacter(idx);
+                
+                if (slot.character === 'x2') {
+                    iconDiv.innerHTML = '<span style="font-size:14px;font-weight:700;color:#64748b;">x2</span>';
+                } else if (slot.character) {
+                    const charEntry = db.characters ? db.characters.find(c => c.name === slot.character) : null;
+                    if (charEntry && charEntry.img) {
+                        const img = document.createElement('img');
+                        img.src = charEntry.img;
+                        img.alt = slot.character;
+                        iconDiv.innerHTML = '';
+                        iconDiv.appendChild(img);
+                    } else {
+                        iconDiv.innerHTML = '<span style="font-size:10px;font-weight:700;color:#475569;">' + (slot.character.substring(0, 2).toUpperCase()) + '</span>';
+                    }
+                }
+                
+                slotDiv.appendChild(iconDiv);
+                
+                // Time input (hidden if x2)
+                if (slot.character !== 'x2') {
+                    const timeInput = document.createElement('input');
+                    timeInput.type = 'text';
+                    timeInput.className = 'ult-time-input';
+                    timeInput.placeholder = 'Time';
+                    timeInput.value = slot.time;
+                    timeInput.onchange = (e) => {
+                        ultimateRotation[idx].time = e.target.value;
+                    };
+                    slotDiv.appendChild(timeInput);
+                }
+                
+                container.appendChild(slotDiv);
+                
+                // Add arrow between slots (except after the last visible one)
+                if (idx < ultimateRotation.length - 1 && (repeatIdx === -1 || idx < repeatIdx)) {
+                    const arrowDiv = document.createElement('div');
+                    arrowDiv.className = 'ult-arrow';
+                    arrowDiv.innerHTML = '&gt;';
+                    container.appendChild(arrowDiv);
+                }
+            });
+            
+            // Add +/- controls after the last visible slot
+            const controlDiv = document.createElement('div');
+            controlDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;';
+            controlDiv.innerHTML = `
+                <button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>
+                ${ultimateRotation.length > 2 ? `<button onclick="removeUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#f87171;font-size:20px;font-weight:700;" title="Remove slot" onmouseover="this.style.borderColor='#f87171';this.style.background='#2a121d'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">-</button>` : ''}
+            `;
+            container.appendChild(controlDiv);
+        }
+
+        function removeUltimateSlot() {
+            if (ultimateRotation.length <= 2) return;
+            ultimateRotation.pop();
+            renderUltimateRotation();
+        }
+        function selectUltimateCharacter(slotIdx) {
+            currentActiveSection = slotIdx;
+            currentActiveCategory = 'ultimate';
+            openModal(slotIdx, 'ultimate');
+        }
+
+        function addUltimateSlot() {
+            ultimateRotation.push({ character: null, time: '' });
+            renderUltimateRotation();
+        }
+
+        function resetUltimateRotation() {
+            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+            renderUltimateRotation();
+        }
     </script>
 
     <script>
@@ -2068,7 +2289,7 @@
 
             const fh = await _presetsDir.getFileHandle(filename, { create: true });
             const writable = await fh.createWritable();
-            await writable.write(JSON.stringify({ version: 1, title, slotData, petsData, formationSlots, bstatDealt: (typeof bstatDealt !== 'undefined' ? bstatDealt : null), bstatPrev: (typeof bstatPrev !== 'undefined' ? bstatPrev : null) }, null, 2));
+            await writable.write(JSON.stringify({ version: 1, title, slotData, petsData, formationSlots, ultimateRotation, bstatDealt: (typeof bstatDealt !== 'undefined' ? bstatDealt : null), bstatPrev: (typeof bstatPrev !== 'undefined' ? bstatPrev : null) }, null, 2));
             await writable.close();
             await scanPresets();
 
@@ -2098,6 +2319,7 @@
                 slotData = preset.slotData;
                 petsData = preset.petsData;
                 formationSlots = preset.formationSlots;
+                ultimateRotation = preset.ultimateRotation || Array(12).fill().map(() => ({ character: null, time: '' }));
                 const titleEl = document.querySelector('h1[contenteditable]');
                 if (titleEl && preset.title) titleEl.innerText = preset.title;
 
@@ -2108,6 +2330,7 @@
                 }
                 renderTeamGrid();
                 setupFormationDragDrop();
+                renderUltimateRotation();
                 // Re-render bars (will show data or reset to empty state)
                 if (typeof renderBStatBars === 'function') {
                     renderBStatBars();
