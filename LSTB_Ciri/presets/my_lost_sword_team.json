@@ -3,7 +3,7 @@
   "title": "My Lost Sword Team",
   "slotData": [
     {
-      "character": null,
+      "character": "Agravaine",
       "gear": {
         "Weapon": null,
         "Armor": null,
@@ -13,7 +13,7 @@
       "card": null
     },
     {
-      "character": null,
+      "character": "Asuka",
       "gear": {
         "Weapon": null,
         "Armor": null,
@@ -23,7 +23,7 @@
       "card": null
     },
     {
-      "character": null,
+      "character": "Bedivere",
       "gear": {
         "Weapon": null,
         "Armor": null,
@@ -89,5 +89,57 @@
     0,
     2,
     -1
-  ]
+  ],
+  "ultimateRotation": [
+    {
+      "character": "Agravaine",
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": "Bedivere",
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    },
+    {
+      "character": null,
+      "time": ""
+    }
+  ],
+  "bstatDealt": null,
+  "bstatPrev": null
 }
