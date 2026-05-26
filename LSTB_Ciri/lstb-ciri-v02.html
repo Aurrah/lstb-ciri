@@ -1827,7 +1827,7 @@
                 { name: null, gems: [null, null, null, null] }
             ];
             formationSlots = [1, 3, 4, 0, 2, -1];
-            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+            ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
             const titleEl = document.querySelector('h1[contenteditable]');
             if (titleEl) titleEl.innerText = 'My Lost Sword Team';
             renderTeamGrid();
@@ -1842,7 +1842,7 @@
         setupFormationDragDrop();
 
         // Initialize Ultimate Rotation
-        let ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+        let ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
         renderUltimateRotation();
 
         function renderUltimateRotation() {
@@ -1911,7 +1911,7 @@
             const controlDiv = document.createElement('div');
             controlDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;';
             controlDiv.innerHTML = `
-                <button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>
+                ${ultimateRotation.length < 13 ? `<button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>` : ''}
                 ${ultimateRotation.length > 2 ? `<button onclick="removeUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#f87171;font-size:20px;font-weight:700;" title="Remove slot" onmouseover="this.style.borderColor='#f87171';this.style.background='#2a121d'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">-</button>` : ''}
             `;
             container.appendChild(controlDiv);
@@ -1929,12 +1929,13 @@
         }
 
         function addUltimateSlot() {
+            if (ultimateRotation.length >= 13) return;
             ultimateRotation.push({ character: null, time: '' });
             renderUltimateRotation();
         }
 
         function resetUltimateRotation() {
-            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+            ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
             renderUltimateRotation();
         }
     </script>
@@ -2346,7 +2347,7 @@
                 slotData = preset.slotData;
                 petsData = preset.petsData;
                 formationSlots = preset.formationSlots;
-                ultimateRotation = preset.ultimateRotation || Array(12).fill().map(() => ({ character: null, time: '' }));
+                ultimateRotation = preset.ultimateRotation || Array(10).fill().map(() => ({ character: null, time: '' }));
                 const titleEl = document.querySelector('h1[contenteditable]');
                 if (titleEl && preset.title) titleEl.innerText = preset.title;
 
