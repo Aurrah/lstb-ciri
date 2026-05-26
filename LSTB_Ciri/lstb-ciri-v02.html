@@ -1,0 +1,2458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Lost Sword Team Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f111a',
+                        cardBg: '#181a24',
+                        slotBg: '#20222f',
+                        accentBlue: '#4b6bfb',
+                        borderCool: '#2d3142'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f111a;
+            color: #f8fafc;
+            font-family: system-ui, sans-serif;
+            /* Prevent horizontal reflow at any zoom level */
+            min-width: 1200px;
+            overflow-x: auto;
+        }
+
+        /* ── Zoom-lock wrapper ── */
+        #zoom-lock {
+            width: 1600px;
+            transform-origin: top left;
+            /* JS will set transform: scale() to counter browser zoom */
+        }
+
+        /* ── Global crisp image rendering at all zoom levels ── */
+        img {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            image-rendering: -webkit-optimize-contrast;
+            -ms-interpolation-mode: bicubic;
+        }
+        
+        #capture-area {
+            padding: 20px;
+            display: inline-block;
+            width: 100%;
+            max-width: fit-content;
+            margin: 0 auto;
+        }
+
+        .slot-squircle { width: 65px; height: 65px; border-radius: 0.5rem; transition: all 0.2s ease; padding: 0 !important; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .slot-squircle:hover { border-color: #4b6bfb; background-color: #2a2d44; }
+        .gear-display, .card-display { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0.25rem; box-sizing: border-box; }
+        .gear-display span, .card-display span { word-break: break-word; text-align: center; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .gear-display img, .card-display img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: -webkit-optimize-contrast; -ms-interpolation-mode: bicubic; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #16161e; }
+        ::-webkit-scrollbar-thumb { background: #4b6bfb; border-radius: 3px; }
+        [contenteditable]:focus { outline: 2px solid #4b6bfb; border-radius: 4px; padding: 0 4px; background: rgba(0,0,0,0.3); }
+        .img-fallback { background-color: #1a1c26; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 0.75rem; text-align: center; }
+        [draggable="true"] { cursor: grab; }
+
+        /* ── Filter buttons ── */
+        .filter-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            color: #64748b; text-transform: uppercase;
+            min-width: 36px; flex-shrink: 0;
+        }
+        .filter-btn {
+            background: #1a1c28; border: 1px solid #2d3142;
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.15s ease; user-select: none;
+            display: flex; align-items: center; justify-content: center;
+            padding: 4px; width: 40px; height: 40px; overflow: hidden;
+            flex-shrink: 0;
+        }
+        .filter-btn:hover { border-color: #4b6bfb; background: #21243a; }
+        .filter-btn.active { border-color: #4b6bfb; background: #1e2240; box-shadow: 0 0 0 1px #4b6bfb44 inset; }
+
+        /* All / star button */
+        .filter-all-btn {
+            font-size: 14px; font-weight: 900; color: #64748b;
+            line-height: 1;
+        }
+        .filter-btn.active .filter-all-btn { color: #e2e8f0; }
+
+        /* Rarity buttons */
+        .star-badge {
+            font-size: 10px; font-weight: 800;
+            letter-spacing: 0.03em; line-height: 1;
+        }
+        .r3 { color: #94a3b8; }
+        .r4 { color: #a78bfa; }
+        .r5 { color: #fbbf24; }
+        .filter-btn.active .star-badge.r3 { color: #cbd5e1; }
+        .filter-btn.active .star-badge.r4 { color: #c4b5fd; }
+        .filter-btn.active .star-badge.r5 { color: #fde68a; }
+
+        /* Icon image filter buttons */
+        .filter-icon-img {
+            width: 28px; height: 28px; object-fit: contain;
+            filter: grayscale(0.3) brightness(0.75);
+            transition: filter 0.15s ease;
+            pointer-events: none;
+        }
+        .filter-btn:hover .filter-icon-img { filter: grayscale(0) brightness(1); }
+        .filter-btn.active .filter-icon-img { filter: grayscale(0) brightness(1.15); }
+
+        /* Active glow per element */
+        #fbtn-element-Fire.active   { border-color: #f97316; background: #1c100a; }
+        #fbtn-element-Frost.active  { border-color: #60a5fa; background: #0c1626; }
+        #fbtn-element-Nature.active { border-color: #4ade80; background: #091a0f; }
+        #fbtn-element-Holy.active   { border-color: #fde68a; background: #1a1505; }
+        #fbtn-element-Shock.active  { border-color: #c084fc; background: #180f2a; }
+        #fbtn-element-Chaos.active  { border-color: #f472b6; background: #1a0c14; }
+        #fbtn-element-Radiance.active { border-color: #fcd34d; background: #1a1403; }
+
+        /* Active glow per class */
+        #fbtn-class-Knight.active { border-color: #94a3b8; background: #111520; }
+        #fbtn-class-Archer.active { border-color: #fb923c; background: #1a0e06; }
+        #fbtn-class-Wizard.active { border-color: #a78bfa; background: #170f2a; }
+        #fbtn-class-Healer.active { border-color: #34d399; background: #091a12; }
+
+        /* Active glow per position */
+        #fbtn-position-Forward.active  { border-color: #f87171; background: #1a0a0a; }
+        #fbtn-position-Center.active { border-color: #fbbf24; background: #1a1505; }
+        #fbtn-position-Backward.active   { border-color: #60a5fa; background: #0c1626; }
+
+        /* ── Ultimate Rotation ── */
+        .ult-rotation-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .ult-char-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.5rem;
+            background: #20222f;
+            border: 2px solid #2d3142;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+        }
+        .ult-char-icon:hover {
+            border-color: #4b6bfb;
+            background: #1e2240;
+        }
+        .ult-char-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+        .ult-char-icon.empty {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ult-char-icon.empty::before {
+            content: '+';
+            font-size: 28px;
+            color: #475569;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .ult-char-icon.empty:hover::before {
+            color: #64748b;
+        }
+        .ult-time-input {
+            width: 60px;
+            padding: 4px 6px;
+            background: #1a1c26;
+            border: 1px solid #2d3142;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #e2e8f0;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .ult-time-input:hover {
+            border-color: #4b6bfb;
+        }
+        .ult-time-input:focus {
+            outline: none;
+            border-color: #4b6bfb;
+            background: #21243a;
+        }
+        .ult-arrow {
+            margin-top: 12px;
+            color: #475569;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* ── Battle Stats Panel ── */
+        #battle-stats-panel {
+            background: #181a24;
+            border: 1px solid #2d3142;
+            border-radius: 0.75rem;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            min-width: 340px;
+            max-width: 420px;
+        }
+        #battle-stats-upload-zone {
+            border: 2px dashed #2d3142;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 10px 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 72px;
+            background: #20222f;
+        }
+        #battle-stats-upload-zone:hover { border-color: #4b6bfb; background: #1e2240; }
+        #battle-stats-upload-zone.dragover { border-color: #4b6bfb; background: #21243a; }
+        .dmg-bar-row { display: flex; align-items: center; gap: 8px; }
+        .dmg-bar-track {
+            flex: 1; height: 12px;
+            background: #20222f;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .dmg-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4b6bfb, #7c9dff);
+            border-radius: 6px;
+            transition: width 0.6s cubic-bezier(.22,.68,0,1.2);
+        }
+        .dmg-slot-num {
+            font-size: 11px; font-weight: 700;
+            color: #64748b; min-width: 14px; text-align: right;
+        }
+        .dmg-pct { font-size: 11px; color: #94a3b8; min-width: 38px; text-align: right; }
+        .dmg-value { font-size: 10px; color: #64748b; min-width: 80px; text-align: right; font-variant-numeric: tabular-nums; }
+        #battle-stats-total { font-size: 12px; color: #e2e8f0; font-weight: 700; text-align: right; }
+        #battle-stats-status { font-size: 10px; color: #64748b; text-align: center; min-height: 14px; }
+        /* Character icon in damage bars */
+        .dmg-char-icon {
+            width: 63px; height: 63px;
+            border-radius: 10px;
+            object-fit: cover;
+            object-position: top center;
+            background: #20222f;
+            border: 2px solid #2d3142;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+        .dmg-char-placeholder {
+            width: 63px; height: 63px;
+            border-radius: 10px;
+            background: #20222f;
+            border: 2px solid #2d3142;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 700; color: #475569;
+            flex-shrink: 0;
+        }
+
+        /* ── Outer layout wrapper ── */
+        #team-stats-wrapper {
+            max-width: 7xl;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        #team-grid {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Character card element badge */
+        .char-el-badge {
+            font-size: 8px; font-weight: 700; padding: 1px 5px;
+            border-radius: 9999px; letter-spacing: 0.04em; display: inline-block;
+        }
+        .badge-Fire     { background: #431407; color: #f97316; }
+        .badge-Frost    { background: #0c1a33; color: #60a5fa; }
+        .badge-Nature   { background: #052e16; color: #4ade80; }
+        .badge-Holy     { background: #1c1506; color: #fde68a; }
+        .badge-Shock    { background: #1e0a2e; color: #c084fc; }
+        .badge-Chaos    { background: #1a0a12; color: #f472b6; }
+        .badge-Radiance { background: #1a1400; color: #fcd34d; }
+    </style>
+</head>
+<body class="min-h-screen p-0 m-0" style="overflow-x:hidden;">
+<div id="zoom-lock" class="flex flex-col justify-between p-4" style="min-height:100vh;">
+
+    <div id="capture-area" class="bg-[#0f111a]">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-wider text-slate-100 transition-all inline-block" contenteditable="true" spellcheck="false">My Lost Sword Team</h1>
+        </header>
+
+        <div id="team-stats-wrapper" class="max-w-7xl mx-auto w-full flex gap-4 items-stretch">
+            <main id="team-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start flex-1 min-w-0"></main>
+
+            <!-- Battle Stats + Notes Column -->
+            <div class="flex flex-col gap-3" style="min-width:340px;max-width:420px;">
+
+                <!-- Battle Stats Panel -->
+                <div id="battle-stats-panel" style="flex:1;">
+                    <div class="text-[12px] text-slate-400 font-semibold tracking-widest uppercase flex items-center gap-2 mb-2">
+                        <i class="fa-solid fa-chart-bar text-[#4b6bfb]"></i>
+                        Damage Dealt
+                    </div>
+
+                    <!-- Upload + Paste buttons (hidden when image is loaded) -->
+                    <div id="bstat-upload-row" class="flex gap-2">
+                        <div id="battle-stats-upload-zone" class="flex-1" title="Click to upload or drag a screenshot here">
+                            <input type="file" id="battle-stats-file" accept="image/*" style="display:none">
+                            <i class="fa-solid fa-upload text-slate-400 text-base"></i>
+                            <span class="text-[10px] text-slate-400 leading-tight text-center">Upload<br>Screenshot</span>
+                        </div>
+                        <button id="battle-stats-paste-btn" title="Paste screenshot from clipboard (Ctrl+V)" onclick="pasteFromClipboard()"
+                            style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 4px;background:#20222f;border:2px dashed #2d3142;border-radius:0.5rem;cursor:pointer;transition:all 0.2s;min-height:72px;">
+                            <i class="fa-solid fa-clipboard text-slate-400 text-base"></i>
+                            <span class="text-[10px] text-slate-400 leading-tight text-center">Paste<br>Clipboard</span>
+                        </button>
+                    </div>
+
+                    <!-- Bars -->
+                    <div id="battle-stats-bars" class="flex flex-col gap-2 mt-2">
+                        <div class="text-center text-[11px] text-slate-600 italic mt-2">No data yet</div>
+                    </div>
+
+                    <!-- Total -->
+                    <div id="battle-stats-total" class="hidden text-right text-[12px] text-slate-200 font-bold pt-2 border-t border-slate-700 mt-2">
+                        Total: <span id="battle-stats-total-val">—</span>
+                    </div>
+
+                    <!-- Status + Clear row -->
+                    <div class="flex items-center justify-between mt-1 gap-2">
+                        <div id="battle-stats-status" class="text-[10px] text-slate-500 min-h-[14px] flex-1"></div>
+                        <button id="battle-stats-update" class="hidden text-[10px] text-emerald-400 hover:text-emerald-300 border border-emerald-900 hover:border-emerald-700 rounded px-2 py-0.5 transition" onclick="beginUpdateScore()">
+                            <i class="fa-solid fa-arrow-rotate-right mr-1"></i>Update
+                        </button>
+                        <button id="battle-stats-clear" class="hidden text-[10px] text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-800 rounded px-2 py-0.5 transition" onclick="clearBattleStats()">
+                            <i class="fa-solid fa-trash mr-1"></i>Clear
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <section class="max-w-7xl mx-auto w-full mt-4 bg-cardBg border border-borderCool rounded-xl p-4 shadow-xl flex flex-col gap-6">
+            <!-- Pets and Gems Section -->
+            <div class="flex flex-col gap-3">
+                <!-- Main container: Pets on TOP-LEFT, Formation on TOP-RIGHT -->
+                <div class="flex gap-8">
+                    <!-- LEFT: Pets & Gems Section -->
+                    <div class="flex-1 flex flex-col gap-4">
+                        <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Pets</h3>
+                        
+                        <!-- 3 Pets displayed horizontally with position icons above each -->
+                        <div class="flex items-start justify-center gap-6">
+                            <!-- Pet 1 -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-center w-20">
+                                    <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-20 h-20 bg-slotBg border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p1', 'pet')" draggable="true" data-pet-idx="0">
+                                        <div id="pet-display-p1" class="flex items-center justify-center h-full w-full">
+                                            <span class="text-xs text-slate-400">+</span>
+                                        </div>
+                                    </div>
+                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <div class="grid grid-cols-2 gap-[14px]">
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
+                                            <span id="gem-p1-0" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_1', 'gem')">
+                                            <span id="gem-p1-1" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_2', 'gem')">
+                                            <span id="gem-p1-2" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_3', 'gem')">
+                                            <span id="gem-p1-3" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pet 2 -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-center w-20">
+                                    <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-20 h-20 bg-slotBg border-2 border-orange-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p2', 'pet')" draggable="true" data-pet-idx="1">
+                                        <div id="pet-display-p2" class="flex items-center justify-center h-full w-full">
+                                            <span class="text-xs text-slate-400">+</span>
+                                        </div>
+                                    </div>
+                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <div class="grid grid-cols-2 gap-[14px]">
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
+                                            <span id="gem-p2-0" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_1', 'gem')">
+                                            <span id="gem-p2-1" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_2', 'gem')">
+                                            <span id="gem-p2-2" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_3', 'gem')">
+                                            <span id="gem-p2-3" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pet 3 -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-center w-20">
+                                    <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-20 h-20 bg-slotBg border-2 border-red-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p3', 'pet')" draggable="true" data-pet-idx="2">
+                                        <div id="pet-display-p3" class="flex items-center justify-center h-full w-full">
+                                            <span class="text-xs text-slate-400">+</span>
+                                        </div>
+                                    </div>
+                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <div class="grid grid-cols-2 gap-[14px]">
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
+                                            <span id="gem-p3-0" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_1', 'gem')">
+                                            <span id="gem-p3-1" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_2', 'gem')">
+                                            <span id="gem-p3-2" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_3', 'gem')">
+                                            <span id="gem-p3-3" class="text-[6px] text-slate-600">+</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT: Formation Section -->
+                    <div class="flex-1 flex flex-col gap-4">
+                        <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Formation</h3>
+                        
+                        <!-- Formation rows -->
+                        <div class="flex flex-col gap-1">
+                            <!-- TOP row with icons above each slot -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[10px] text-slate-500 font-bold w-8">TOP</span>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Backward">
+                                        <div id="form-slot-0" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="0">-</div>
+                                    </div>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Center">
+                                        <div id="form-slot-1" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="1">-</div>
+                                    </div>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Forward">
+                                        <div id="form-slot-2" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="2">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- BOT row without icons -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[10px] text-slate-500 font-bold w-8">BOT</span>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <div id="form-slot-3" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="3">-</div>
+                                    </div>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <div id="form-slot-4" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="4">-</div>
+                                    </div>
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <div id="form-slot-5" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="5">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ultimate Rotation — full width -->
+            <div class="border-t border-borderCool pt-4 flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Ultimate Rotation</h3>
+                    <button onclick="resetUltimateRotation()" class="text-xs text-slate-400 hover:text-slate-200 transition px-2 py-1 rounded border border-slate-700 hover:border-slate-500" title="Reset all rotation slots">
+                        <i class="fa-solid fa-redo mr-1"></i>Reset
+                    </button>
+                </div>
+                <div id="ultimate-rotation-container" class="flex items-start gap-2 pb-2 overflow-x-auto">
+                    <!-- Rotation slots will be generated here -->
+                </div>
+            </div>
+        </section>
+
+
+    </div>
+
+    <footer id="page-footer" class="max-w-7xl mx-auto w-full mt-4 bg-cardBg border border-borderCool rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl mb-4">
+        <div class="text-xs text-slate-400">Layout Engine v3.0 | LSTB Local Directory Mode</div>
+        <div class="flex gap-3 flex-wrap justify-end items-center">
+            <button class="bg-[#1c1e29] border border-slate-700 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 px-4 rounded-lg transition-all" onclick="clearAllSlots()"><i class="fa-solid fa-trash-can mr-2"></i>Clear</button>
+            <button class="bg-[#1a1e2e] border border-blue-700 hover:bg-blue-900/40 text-blue-400 text-xs font-semibold py-2 px-4 rounded-lg transition-all" onclick="savePreset()"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Preset</button>
+            <div class="relative">
+                <button class="bg-[#1a1e2e] border border-blue-700 hover:bg-blue-900/40 text-blue-400 text-xs font-semibold py-2 px-4 rounded-lg transition-all flex items-center gap-2" onclick="togglePresetDropdown(event)">
+                    <i class="fa-solid fa-folder-open"></i>Load Preset<i class="fa-solid fa-chevron-down text-[10px]"></i>
+                </button>
+                <div id="preset-dropdown" class="hidden absolute bottom-full right-0 mb-2 w-64 bg-[#181a24] border border-[#2d3142] rounded-xl shadow-2xl z-50 overflow-hidden">
+                    <div class="px-3 py-2 border-b border-[#2d3142] flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Presets</span>
+                        <button onclick="scanPresets()" class="text-slate-500 hover:text-slate-300 transition text-xs" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    </div>
+                    <div id="preset-list" class="max-h-64 overflow-y-auto py-1">
+                        <div class="px-3 py-3 text-xs text-slate-500 text-center italic">Grant folder access to see presets</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Folder access banner - shown on load until user grants access -->
+    <div id="folder-banner" class="fixed bottom-0 left-0 right-0 z-[90] bg-[#1a1e2e] border-t border-blue-800 px-6 py-3 flex items-center justify-between gap-4 shadow-2xl">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-folder-open text-blue-400 text-lg"></i>
+            <div>
+                <div class="text-sm font-semibold text-slate-200">Grant Folder Access</div>
+                <div class="text-xs text-slate-400">Select your <span class="text-blue-400 font-mono">LSTB_Ciri</span> folder to enable preset saving and loading.</div>
+            </div>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+            <button onclick="initPresetsFolder()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-all"><i class="fa-solid fa-folder-open mr-2"></i>Select Folder</button>
+            <button onclick="document.getElementById('folder-banner').remove()" class="text-slate-500 hover:text-slate-300 text-xs px-2 transition-all" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-borderCool w-full max-w-5xl rounded-xl p-6 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-lg font-bold tracking-wide text-slate-100 capitalize">Select Item</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Character Filters (only show for character selection) -->
+            <div id="character-filters" class="hidden mb-4 pb-3 border-b border-borderCool flex flex-col gap-2">
+                <!-- Row 1: Class + Rarity -->
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="filter-label">CLASS</span>
+                    <button onclick="toggleAllFilter('class')" id="fbtn-class-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="toggleFilter('class','Knight')" id="fbtn-class-Knight" class="filter-btn" title="Knight">
+                        <img src="Icons/class_knight.webp" class="filter-icon-img" alt="Knight">
+                    </button>
+                    <button onclick="toggleFilter('class','Archer')" id="fbtn-class-Archer" class="filter-btn" title="Archer">
+                        <img src="Icons/class_archer.webp" class="filter-icon-img" alt="Archer">
+                    </button>
+                    <button onclick="toggleFilter('class','Wizard')" id="fbtn-class-Wizard" class="filter-btn" title="Wizard">
+                        <img src="Icons/class_wizard.webp" class="filter-icon-img" alt="Wizard">
+                    </button>
+                    <button onclick="toggleFilter('class','Healer')" id="fbtn-class-Healer" class="filter-btn" title="Healer">
+                        <img src="Icons/class_healer.webp" class="filter-icon-img" alt="Healer">
+                    </button>
+                    <!-- Divider -->
+                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                    <span class="filter-label">RARITY</span>
+                    <button onclick="toggleAllFilter('rarity')" id="fbtn-rarity-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="toggleFilter('rarity','3')" id="fbtn-rarity-3" class="filter-btn" title="3★">
+                        <span class="star-badge r3">3★</span>
+                    </button>
+                    <button onclick="toggleFilter('rarity','4')" id="fbtn-rarity-4" class="filter-btn" title="4★">
+                        <span class="star-badge r4">4★</span>
+                    </button>
+                    <button onclick="toggleFilter('rarity','5')" id="fbtn-rarity-5" class="filter-btn" title="5★">
+                        <span class="star-badge r5">5★</span>
+                    </button>
+                </div>
+                <!-- Row 2: Position + Element -->
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="filter-label">POSITION</span>
+                    <button onclick="toggleAllFilter('position')" id="fbtn-position-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="toggleFilter('position','Forward')" id="fbtn-position-Forward" class="filter-btn" title="Forward">
+                        <img src="Icons/position_forward.webp" class="filter-icon-img" alt="Forward">
+                    </button>
+                    <button onclick="toggleFilter('position','Center')" id="fbtn-position-Center" class="filter-btn" title="Center">
+                        <img src="Icons/position_center.webp" class="filter-icon-img" alt="Center">
+                    </button>
+                    <button onclick="toggleFilter('position','Backward')" id="fbtn-position-Backward" class="filter-btn" title="Backward">
+                        <img src="Icons/position_backward.webp" class="filter-icon-img" alt="Backward">
+                    </button>
+                    <!-- Divider -->
+                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                    <span class="filter-label">ELEMENT</span>
+                    <button onclick="toggleAllFilter('element')" id="fbtn-element-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="toggleFilter('element','Fire')" id="fbtn-element-Fire" class="filter-btn" title="Fire">
+                        <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
+                    </button>
+                    <button onclick="toggleFilter('element','Frost')" id="fbtn-element-Frost" class="filter-btn" title="Frost">
+                        <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
+                    </button>
+                    <button onclick="toggleFilter('element','Nature')" id="fbtn-element-Nature" class="filter-btn" title="Nature">
+                        <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
+                    </button>
+                    <button onclick="toggleFilter('element','Holy')" id="fbtn-element-Holy" class="filter-btn" title="Holy">
+                        <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
+                    </button>
+                    <button onclick="toggleFilter('element','Shock')" id="fbtn-element-Shock" class="filter-btn" title="Shock">
+                        <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
+                    </button>
+                    <button onclick="toggleFilter('element','Chaos')" id="fbtn-element-Chaos" class="filter-btn" title="Chaos">
+                        <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
+                    </button>
+                    <button onclick="toggleFilter('element','Radiance')" id="fbtn-element-Radiance" class="filter-btn" title="Radiance">
+                        <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
+                    </button>
+                    <!-- Count + Reset pushed to end -->
+                    <div class="flex items-center gap-2 ml-auto">
+                        <span id="char-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
+                        <button onclick="resetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pet Filters (only show for pet selection) -->
+            <div id="pet-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="filter-label">RARITY</span>
+                    <button onclick="toggleAllPetFilter('rarity')" id="pfbtn-rarity-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="togglePetFilter('rarity','3')" id="pfbtn-rarity-3" class="filter-btn" title="3★">
+                        <span class="star-badge r3">3★</span>
+                    </button>
+                    <button onclick="togglePetFilter('rarity','4')" id="pfbtn-rarity-4" class="filter-btn" title="4★">
+                        <span class="star-badge r4">4★</span>
+                    </button>
+                    <button onclick="togglePetFilter('rarity','5')" id="pfbtn-rarity-5" class="filter-btn" title="5★">
+                        <span class="star-badge r5">5★</span>
+                    </button>
+                    <!-- Divider -->
+                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                    <span class="filter-label">ELEMENT</span>
+                    <button onclick="toggleAllPetFilter('element')" id="pfbtn-element-all" class="filter-btn active" title="All">
+                        <span class="filter-all-btn">★</span>
+                    </button>
+                    <button onclick="togglePetFilter('element','Fire')" id="pfbtn-element-Fire" class="filter-btn" title="Fire">
+                        <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
+                    </button>
+                    <button onclick="togglePetFilter('element','Frost')" id="pfbtn-element-Frost" class="filter-btn" title="Frost">
+                        <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
+                    </button>
+                    <button onclick="togglePetFilter('element','Nature')" id="pfbtn-element-Nature" class="filter-btn" title="Nature">
+                        <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
+                    </button>
+                    <button onclick="togglePetFilter('element','Holy')" id="pfbtn-element-Holy" class="filter-btn" title="Holy">
+                        <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
+                    </button>
+                    <button onclick="togglePetFilter('element','Shock')" id="pfbtn-element-Shock" class="filter-btn" title="Shock">
+                        <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
+                    </button>
+                    <button onclick="togglePetFilter('element','Chaos')" id="pfbtn-element-Chaos" class="filter-btn" title="Chaos">
+                        <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
+                    </button>
+                    <button onclick="togglePetFilter('element','Radiance')" id="pfbtn-element-Radiance" class="filter-btn" title="Radiance">
+                        <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
+                    </button>
+                    <!-- Count + Reset pushed to end -->
+                    <div class="flex items-center gap-2 ml-auto">
+                        <span id="pet-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
+                        <button onclick="resetPetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <input type="text" id="modal-search" placeholder="Search by name..." class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-accentBlue mb-4" onkeyup="filterGrid()">
+            <div id="modal-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 overflow-y-auto pr-2 pb-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let slotData = [
+    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null }
+        ];
+        // Independent pets storage - not tied to character slots
+        let petsData = [
+            { name: null, gems: [null, null, null, null] },
+            { name: null, gems: [null, null, null, null] },
+            { name: null, gems: [null, null, null, null] }
+        ];
+        // Formation mapping: form-slot-idx -> team slot index (or -1 for empty)
+        // Default: Slot 2->Top1, Slot 4->Top2, Slot 5->Top3, Slot 1->Bot1, Slot 3->Bot2, empty->Bot3
+        let formationSlots = [1, 3, 4, 0, 2, -1];
+        const categories = ['Weapon', 'Armor', 'Helmet', 'Rune'];
+        
+        // Gem database with element restrictions
+        const rawGems = ['amethyst-hexagon', 'amethyst-octagon', 'amethyst-round', 'amethyst-square', 'emerald-hexagon', 'emerald-octagon', 'emerald-round', 'emerald-square', 'opal-hexagon', 'opal-octagon', 'opal-round', 'opal-square', 'ruby-hexagon', 'ruby-octagon', 'ruby-round', 'ruby-square', 'sapphire-hexagon', 'sapphire-octagon', 'sapphire-round', 'sapphire-square', 'topaz-hexagon', 'topaz-octagon', 'topaz-round', 'topaz-square', 'turquoise-hexagon', 'turquoise-octagon', 'turquoise-round', 'turquoise-square'];
+        
+        const gemElements = {
+            'amethyst-hexagon': 'Chaos', 'amethyst-octagon': 'Chaos', 'amethyst-round': 'Chaos', 'amethyst-square': 'Chaos',
+            'emerald-hexagon': 'Nature', 'emerald-octagon': 'Nature', 'emerald-round': 'Nature', 'emerald-square': 'Nature',
+            'opal-hexagon': 'Holy', 'opal-octagon': 'Holy', 'opal-round': 'Holy', 'opal-square': 'Holy',
+            'ruby-hexagon': 'Fire', 'ruby-octagon': 'Fire', 'ruby-round': 'Fire', 'ruby-square': 'Fire',
+            'sapphire-hexagon': 'Frost', 'sapphire-octagon': 'Frost', 'sapphire-round': 'Frost', 'sapphire-square': 'Frost',
+            'topaz-hexagon': 'Radiance', 'topaz-octagon': 'Radiance', 'topaz-round': 'Radiance', 'topaz-square': 'Radiance',
+            'turquoise-hexagon': 'Shock', 'turquoise-octagon': 'Shock', 'turquoise-round': 'Shock', 'turquoise-square': 'Shock'
+        };
+        
+        
+        function validateSlotGear(slotIndex) {
+            const slot = slotData[slotIndex];
+            if (!slot.character) return;
+
+            const charInfo = getCharInfo(slot.character);
+            const charClass = charInfo.class;
+
+            for (let gearCat in slot.gear) {
+                const gearName = slot.gear[gearCat];
+                if (!gearName) continue;
+
+                const gear = db[gearCat].find(g => g.name === gearName);
+                // Clear gear if it doesn't exist or doesn't match character class
+                if (!gear || (gear.class && gear.class !== charClass)) {
+                    slot.gear[gearCat] = null;
+                }
+            }
+        }
+
+        function validatePetGems(petIdx) {
+            const pet = petsData[petIdx];
+            if (!pet || !pet.name) return;
+
+            const petInfo = getCharInfo(pet.name);
+            const petElement = petInfo.element;
+
+            for (let gemIdx = 0; gemIdx < 4; gemIdx++) {
+                const gemName = pet.gems[gemIdx];
+                if (!gemName) continue;
+
+                // Look up gem element using the full gem name
+                const gemElement = gemElements[gemName];
+
+                // Clear gem if it doesn't match pet's element
+                if (gemElement && gemElement !== petElement) {
+                    pet.gems[gemIdx] = null;
+                }
+            }
+        }
+
+        function renderPets() {
+    // Validate that all gems are still compatible with their pets
+    for (let i = 0; i < 3; i++) {
+        validatePetGems(i);
+    }
+
+    const petDisplays = [
+        document.getElementById('pet-display-p1'),
+        document.getElementById('pet-display-p2'),
+        document.getElementById('pet-display-p3')
+    ];
+
+    // Render pet images
+    petDisplays.forEach((el, i) => {
+        if (!el) return;
+
+        const petName = petsData[i].name;
+
+        if (!petName) {
+            el.innerHTML = `<span class="text-xs text-slate-400">+</span>`;
+            return;
+        }
+
+        const pet = db.pets.find(p => p.name === petName);
+        el.innerHTML = `<img src="${pet?.img || ''}" class="w-full h-full object-cover rounded-lg">`;
+    });
+
+    // Render gem slots
+    for (let petIdx = 0; petIdx < 3; petIdx++) {
+        for (let gemIdx = 0; gemIdx < 4; gemIdx++) {
+            const gemName = petsData[petIdx].gems[gemIdx];
+            const gemEl = document.getElementById(`gem-p${petIdx + 1}-${gemIdx}`);
+            if (gemEl) {
+                if (gemName) {
+                    gemEl.innerHTML = `<img src="gems/${gemName}.webp" class="w-6 h-6 object-contain" alt="${gemName}">`;
+                } else {
+                    gemEl.innerHTML = `<span class="text-[6px] text-slate-600">+</span>`;
+                }
+            }
+        }
+    }
+    
+    // Reset opacity on all pet slot containers
+    document.querySelectorAll('[data-pet-idx]').forEach(slot => {
+        slot.style.opacity = '1';
+    });
+    
+    setupPetDragDrop();
+}
+        function renderTeamGrid() {
+            // Validate that all gear is still compatible with their characters
+            for (let i = 0; i < slotData.length; i++) {
+                validateSlotGear(i);
+            }
+
+            const grid = document.getElementById('team-grid');
+            grid.innerHTML = '';
+            slotData.forEach((slot, index) => {
+                const section = document.createElement('section');
+                section.className = "bg-cardBg border border-borderCool rounded-xl p-4 flex flex-col gap-4 shadow-xl";
+                section.draggable = true;
+                section.dataset.index = index;
+                section.innerHTML = `
+                    <div class="relative bg-slotBg border-2 border-dashed border-slate-700 rounded-lg overflow-hidden flex flex-col items-center justify-center cursor-pointer p-0 h-48 group transition-all hover:border-accentBlue" onclick="openModal('${index}', 'character')">
+                        <div id="char-display-${index}" class="w-full h-full">
+    ${
+        slot.character
+        ? (() => {
+            const charData = db.characters.find(c => c.name === slot.character);
+            return `
+                <div class="relative w-full h-full">
+                    <img 
+                        src="${charData?.img || ''}" 
+                        alt="${slot.character}"
+                        class="w-full h-full object-cover object-top"
+                        onerror="this.style.display='none'"
+                    >
+                    
+                    <!-- Dark gradient overlay -->
+                    <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/80 to-transparent"></div>
+
+                    <!-- Character name -->
+                    <div class="absolute bottom-2 left-2 right-2 text-center">
+                        <span class="text-xs text-white font-bold drop-shadow-lg">
+                            ${slot.character}
+                        </span>
+                    </div>
+                </div>
+            `;
+        })()
+        : `
+            <div class="text-center flex flex-col items-center justify-center w-full h-full p-2">
+                <i class="fa-solid fa-user-plus text-2xl text-slate-500 mb-2"></i>
+                <span class="text-xs text-slate-400 font-medium">Add Character</span>
+            </div>
+        `
+    }
+</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        ${categories.map(cat => `
+                            <div class="slot-squircle bg-slotBg border border-slate-700 flex flex-col items-center justify-center cursor-pointer p-1" onclick="openModal('${index}', 'gear', '${cat}')">
+                                <div id="gear-display-${index}-${cat}" class="gear-display">
+                                    ${slot.gear[cat] ? (() => {
+                                        const gearData = db[cat].find(g => g.name === slot.gear[cat]);
+                                        return gearData ? `<img src="${gearData.img}" alt="${slot.gear[cat]}" class="rounded" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"><span class="text-xs text-slate-200" style="display:none">${slot.gear[cat]}</span>` : `<span class="text-xs text-slate-200">${slot.gear[cat]}</span>`;
+                                    })() : `<span class="text-[10px] text-slate-400 font-mono">${cat}</span>`}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="relative bg-slotBg border border-slate-700 rounded-lg h-40 flex flex-col items-center justify-center cursor-pointer overflow-hidden" onclick="openModal('${index}', 'card')">
+                        <div id="card-display-${index}" class="card-display w-full h-full">
+    ${
+        slot.card
+        ? (() => {
+            const cardData = db.cards.find(c => c.name === slot.card);
+            return `
+                <div class="relative w-full h-full">
+                    <img 
+                        src="${cardData?.img || ''}" 
+                        alt="${slot.card}"
+                        class="w-full h-full object-contain"
+                    >
+
+                    <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 to-transparent"></div>
+
+                    <div class="absolute bottom-1 left-1 right-1 text-center">
+                        <span class="text-[10px] text-white font-bold drop-shadow-lg">
+                            ${slot.card}
+                        </span>
+                    </div>
+                </div>
+            `;
+        })()
+        : `<span class="text-xs text-slate-400">Add Card</span>`
+    }
+</div>
+                `;
+                
+                section.ondragstart = (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('dragType', 'character');
+                    e.dataTransfer.setData('dragIndex', index);
+                };
+                section.ondragover = (e) => e.preventDefault();
+                section.ondrop = (e) => {
+                    e.preventDefault();
+                    const dragType = e.dataTransfer.getData('dragType');
+                    const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'));
+                    if (dragType === 'character') {
+                        const to = parseInt(index);
+                        [slotData[dragIndex], slotData[to]] = [slotData[to], slotData[dragIndex]];
+                        renderTeamGrid();
+                        if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
+                    }
+                };
+                grid.appendChild(section);
+            });
+            updateFormation();
+        renderPets();
+        }
+
+        function updateFormation() {
+            formationSlots.forEach((teamSlotIdx, formIdx) => {
+                const el = document.getElementById(`form-slot-${formIdx}`);
+                if (el) {
+                    if (teamSlotIdx === -1) {
+                        el.innerText = '-';
+                    } else {
+                        el.innerText = slotData[teamSlotIdx].character ? slotData[teamSlotIdx].character : '-';
+                    }
+                }
+            });
+        }
+
+        function parseName(filename) {
+            let parts = filename.split('_');
+            let namePart = parts[1] || parts[0];
+            let num = parts.length > 2 ? parseInt(parts[2], 10) : 1;
+            // Only append number for true alternates (_02+); _01 is always the base form
+            let numStr = num > 1 ? ` ${num}` : '';
+            namePart = namePart.replace(/([A-Z])/g, ' $1').trim();
+            return namePart + numStr;
+        }
+
+        // ── Explicit name overrides: parseName result → DB key (or null = not in DB) ──
+        const charNameOverrides = {
+            'Rey':       'Ray',       
+            'Rita 2':    'Rita Maid', 
+            'Cow Queen': 'Cowqueen',  
+            'MorganleFay': 'Morgan le Fay',  
+        };
+
+        // Pre-built normalised (no-space, lowercase) index — populated after characterDatabase
+        const _dbIndex = {};
+
+        function getCharInfo(displayName) {
+            if (!displayName) return {}; // Return empty object if no character selected
+            // 1. Explicit overrides (check both raw name and stripped-number form)
+            const stripped = displayName.replace(/\s+\d+$/, '').trim();
+            for (const candidate of [displayName, stripped]) {
+                if (candidate in charNameOverrides) {
+                    const k = charNameOverrides[candidate];
+                    return k ? (characterDatabase[k] || {}) : {};
+                }
+            }
+            // 2. Direct lookup
+            if (characterDatabase[displayName]) return characterDatabase[displayName];
+            // 3. Strip trailing variant number ("Bedivere 2" → "Bedivere")
+            if (characterDatabase[stripped]) return characterDatabase[stripped];
+            // 4. Case-insensitive no-space match ("Cow Queen" → "Cowqueen")
+            const norm = stripped.replace(/\s+/g, '').toLowerCase();
+            const key = _dbIndex[norm];
+            if (key) return characterDatabase[key];
+            return {};
+        }
+
+        const rawCharacters = ['Pc_Agravaine_01', 'Pc_Anessa_01', 'Pc_Asuka_01', 'Pc_Balin_01', 'Pc_Bedivere_01', 'Pc_NeoBedivere_01', 'Pc_Claire_01', 'Pc_CowQueen_01', 'Pc_Cristina_01', 'Pc_DianCecht_01', 'Pc_Elaine_01', 'Pc_Elin_01', 'Pc_Elizabeth_01', 'Pc_Enya_01', 'Pc_Erin_01', 'Pc_Esmeralda_01', 'Pc_Estheria_01', 'Pc_Ethan_01', 'Pc_Eva_02', 'Pc_Gaheris_01', 'Pc_Galahad_01', 'Pc_Gawain_01', 'Pc_Guinevere_01', 'Pc_Hikage_01', 'Pc_Isabel_01', 'Pc_Isis_01', 'Pc_Isolde_01', 'Pc_Joanofarc_01', 'Pc_Jessi_01', 'Pc_Karishara_01', 'Pc_Katrin_01', 'Pc_Kay_01', 'Pc_Kirke_01', 'Pc_Lancelot_01', 'Pc_Lilith_01', 'Pc_Lisa_01', 'Pc_Lohengrin_01', 'Pc_Lua_01', 'Pc_Lucy_01', 'Pc_Lueira_01', 'Pc_Rowena_01', 'Pc_Merlin_01', 'Pc_Merry_01', 'Pc_SMerry_01', 'Pc_Mia_01', 'Pc_Morgana_01', 'Pc_MorganleFay_01', 'Pc_Morgause_01', 'Pc_Nesha_01', 'Pc_Nimue_01', 'Pc_Palamedes_01', 'Pc_Percival_01', 'Pc_Rachel_01', 'Pc_Ran_01', 'Pc_Rey_01', 'Pc_Ria_01', 'Pc_Rita_01', 'Pc_MaidRita_01', 'Pc_Sarah_01', 'Pc_Tiamat_01', 'Pc_Tristan_01', 'Pc_Urien_01', 'Pc_Vivien_01', 'Pc_Yumi_01'];
+        
+        // Character database with class, element, position, and rarity
+        const characterDatabase = {
+          'Agravaine': { class: 'Archer', element: 'Chaos', position: 'Middle', rarity: '5' },
+          'Anessa': { class: 'Knight', element: 'Frost', position: 'Front', rarity: '5' },
+          'Asuka': { class: 'Knight', element: 'Nature', position: 'Front', rarity: '5' },
+          'Balin': { class: 'Knight', element: 'Nature', position: 'Front', rarity: '4' },
+          'Bedivere': { class: 'Archer', element: 'Nature', position: 'Back', rarity: '4' },
+          'NeoBedivere': { class: 'Archer', element: 'Holy', position: 'Middle', rarity: '5' },
+          'Circe': { class: 'Wizard', element: 'Chaos', position: 'Back', rarity: '5' },
+          'Claire': { class: 'Knight', element: 'Radiance', position: 'Middle', rarity: '5' },
+          'Cowqueen': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '5' },
+          'Cristina': { class: 'Wizard', element: 'Fire', position: 'Middle', rarity: '5' },
+          'DianCecht': { class: 'Healer', element: 'Radiance', position: 'Middle', rarity: '5' },
+          'Elaine': { class: 'Wizard', element: 'Frost', position: 'Middle', rarity: '3' },
+          'Elin': { class: 'Archer', element: 'Nature', position: 'Middle', rarity: '4' },
+          'Elizabeth': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '5' },
+          'Enya': { class: 'Archer', element: 'Fire', position: 'Back', rarity: '5' },
+          'Erin': { class: 'Wizard', element: 'Radiance', position: 'Back', rarity: '5' },
+          'Esmeralda': { class: 'Healer', element: 'Radiance', position: 'Back', rarity: '4' },
+          'Estheria': { class: 'Wizard', element: 'Chaos', position: 'Back', rarity: '5' },
+          'Ethan': { class: 'Knight', element: 'Frost', position: 'Front', rarity: '4' },
+          'Eva': { class: 'Wizard', element: 'Shock', position: 'Back', rarity: '5' },
+          'Gaheris': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '4' },
+          'Galahad': { class: 'Knight', element: 'Radiance', position: 'Front', rarity: '5' },
+          'Gawain': { class: 'Knight', element: 'Nature', position: 'Front', rarity: '5' },
+          'Guinevere': { class: 'Healer', element: 'Frost', position: 'Back', rarity: '5' },
+          'Hikage': { class: 'Archer', element: 'Nature', position: 'Middle', rarity: '5' },
+          'Isabel': { class: 'Archer', element: 'Frost', position: 'Front', rarity: '5' },
+          'Isis': { class: 'Knight', element: 'Radiance', position: 'Front', rarity: '3' },
+          'Isolde': { class: 'Healer', element: 'Nature', position: 'Back', rarity: '5' },
+          'Jessi': { class: 'Archer', element: 'Chaos', position: 'Back', rarity: '3' },
+          'Joanofarc': { class: 'Archer', element: 'Shock', position: 'Back', rarity: '5' },
+          'Karishara': { class: 'Wizard', element: 'Fire', position: 'Back', rarity: '5' },
+          'Katrin': { class: 'Wizard', element: 'Frost', position: 'Back', rarity: '5' },
+          'Kay': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '5' },
+          'Kirke': { class: 'Wizard', element: 'Nature', position: 'Back', rarity: '5' },
+          'Lancelot': { class: 'Knight', element: 'Radiance', position: 'Front', rarity: '5' },
+          'Lilith': { class: 'Knight', element: 'Chaos', position: 'Middle', rarity: '5' },
+          'Lisa': { class: 'Archer', element: 'Chaos', position: 'Middle', rarity: '5' },
+          'Lohengrin': { class: 'Knight', element: 'Chaos', position: 'Back', rarity: '5' },
+          'Lua': { class: 'Knight', element: 'Shock', position: 'Front', rarity: '5' },
+          'Lucy': { class: 'Knight', element: 'Chaos', position: 'Front', rarity: '5' },
+          'Lueira': { class: 'Healer', element: 'Frost', position: 'Back', rarity: '5' },
+          'Merlin': { class: 'Wizard', element: 'Holy', position: 'Middle', rarity: '5' },
+          'Merry': { class: 'Wizard', element: 'Nature', position: 'Back', rarity: '4' },
+          'SMerry': { class: 'Wizard', element: 'Frost', position: 'Back', rarity: '5' },
+          'Mia': { class: 'Knight', element: 'Shock', position: 'Front', rarity: '5' },
+          'MorganleFay': { class: 'Wizard', element: 'Holy', position: 'Middle', rarity: '5' },
+          'Morgana': { class: 'Wizard', element: 'Chaos', position: 'Back', rarity: '5' },
+          'Morgause': { class: 'Wizard', element: 'Fire', position: 'Back', rarity: '5' },
+          'Nesha': { class: 'Archer', element: 'Radiance', position: 'Back', rarity: '5' },
+          'Nimue': { class: 'Wizard', element: 'Frost', position: 'Middle', rarity: '4' },
+          'Palamedes': { class: 'Knight', element: 'Nature', position: 'Front', rarity: '5' },
+          'Percival': { class: 'Knight', element: 'Frost', position: 'Front', rarity: '5' },
+          'Rachel': { class: 'Healer', element: 'Nature', position: 'Middle', rarity: '3' },
+          'Ran': { class: 'Knight', element: 'Holy', position: 'Front', rarity: '5' },
+          'Ray': { class: 'Knight', element: 'Chaos', position: 'Front', rarity: '4' },
+          'Ria': { class: 'Healer', element: 'Fire', position: 'Back', rarity: '5' },
+          'Rita': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '3' },
+          'MaidRita': { class: 'Healer', element: 'Fire', position: 'Middle', rarity: '5' },
+          'Rowena': { class: 'Wizard', element: 'Chaos', position: 'Back', rarity: '4' },
+          'Sarah': { class: 'Archer', element: 'Fire', position: 'Middle', rarity: '4' },
+          'Tiamat': { class: 'Wizard', element: 'Holy', position: 'Back', rarity: '5' },
+          'Tristan': { class: 'Archer', element: 'Nature', position: 'Back', rarity: '5' },
+          'Urien': { class: 'Knight', element: 'Radiance', position: 'Front', rarity: '4' },
+          'Vivien': { class: 'Wizard', element: 'Nature', position: 'Middle', rarity: '5' },
+          'Yumi': { class: 'Wizard', element: 'Frost', position: 'Back', rarity: '5' },
+          
+          // ── Pet-only entries ───────────────────────────────────────────────
+          'Whitey':    { element: 'Radiance', rarity: '4' },
+          'Gold':      { element: 'Fire',     rarity: '3' },
+          'Neo':       { element: 'Frost',    rarity: '4' },
+          'Nightsong': { element: 'Chaos',    rarity: '4' },
+          'Shiba':     { element: 'Fire',     rarity: '4' },
+          'Belle':     { element: 'Nature',   rarity: '4' },
+          'Slime':     { element: 'Nature',   rarity: '3' },
+          'Retriever': { element: 'Radiance', rarity: '3' },
+          'Raccoon':   { element: 'Shock',    rarity: '3' },
+          'Hen':       { element: 'Shock',    rarity: '3' },
+          'Chick':     { element: 'Fire',     rarity: '3' },
+          'Momo':      { element: 'Nature',   rarity: '3' },
+          'Nabi':      { element: 'Chaos',    rarity: '3' },
+          'Cheese':    { element: 'Holy',     rarity: '3' },
+          'Phoenix':   { element: 'Fire',     rarity: '5' },
+          'Coco':      { element: 'Frost',    rarity: '3' },
+          'Midnight':  { element: 'Shock',    rarity: '4' },
+          'Fenrir':    { element: 'Shock',    rarity: '5' },
+          'Griffon':   { element: 'Nature',   rarity: '5' },
+          'Athena':    { element: 'Radiance', rarity: '5' }
+        };
+
+        // Populate normalised lookup index now that characterDatabase is defined
+        Object.keys(characterDatabase).forEach(k => {
+            _dbIndex[k.replace(/\s+/g, '').toLowerCase()] = k;
+        });
+        const rawCards = ['Ab_Agravaine_01', 'Ab_Anessa_01', 'Ab_Asuka_01', 'Ab_Balin_01', 'Ab_Bedivere_01', 'Ab_NeoBedivere_01', 'Ab_Cain_01', 'Ab_Claire_01', 'Ab_Cowqueen_01', 'Ab_Cristina_01', 'Ab_DianCecht_01', 'Ab_Elaine_01', 'Ab_Elin_01', 'Ab_Elizabeth_01', 'Ab_Enya_01', 'Ab_Erin_01', 'Ab_Esmeralda_01', 'Ab_Estheria_01', 'Ab_Ethan_01', 'Ab_Abyss30_01', 'Ab_Eva_01', 'Ab_Gaheris_01', 'Ab_Galahad_01', 'Ab_Gawain_01', 'Ab_Guinevere_01', 'Ab_Hikage_01', 'Ab_Isabel_01', 'Ab_Isolde_01', 'Ab_Joanofarc_01', 'Ab_Jessi_01', 'Ab_Kanna_01', 'Ab_Karishara_01', 'Ab_Katrin_01', 'Ab_Kay_01', 'Ab_Kirke_01', 'Ab_Lancelot_01', 'Ab_Lilith_01', 'Ab_Lisa_01', 'Ab_Lohengrin_01', 'Ab_Lua_01', 'Ab_Lucius_01', 'Ab_Lucy_01', 'Ab_Lueira_01', 'Ab_Rowena_01', 'Ab_Abyss60_01', 'Ab_Merlin_01', 'Ab_SMerry_01', 'Ab_Mia_01', 'Ab_Mordred_01', 'Ab_Morgana_01', 'Ab_MorganleFay_01', 'Ab_Morgause_01', 'Ab_Nesha_01', 'Ab_Nimue_01', 'Ab_Palamedes_01', 'Ab_Percival_01', 'Ab_Rachel_01', 'Ab_Ria_01', 'Ab_Rita_01', 'Ab_MaidRita_01', 'Ab_Sarah_01', 'Ab_Tiamat_01', 'Ab_Tristan_01', 'Ab_Urien_01', 'Ab_Vivien_01', 'Ab_Vortigern_01', 'Ab_Yumi_01'];
+        const rawPets = ['Pet_Agravaine_01', 'Pet_Anessa_01', 'Pet_Asuka_01', 'Pet_Athena_01', 'Pet_Bedivere_01', 'Pet_NeoBedivere_01', 'Pet_Cheese_01', 'Pet_Momo_01', 'Pet_Coco_01', 'Pet_Neo_01', 'Pet_Nabi_01', 'Pet_Chick_01', 'Pet_Hen_01', 'Pet_CowQueen_01', 'Pet_Cristina_01', 'Pet_DianCecht_01', 'Pet_Elizabeth_01', 'Pet_Erin_01', 'Pet_Estheria_01', 'Pet_Eva_01', 'Pet_Eva_02', 'Pet_Fenrir_01', 'Pet_Galahad_01', 'Pet_Griffon_01', 'Pet_Guinevere_01', 'Pet_Hikage_01', 'Pet_Isabel_01', 'Pet_Joanofarc_01', 'Pet_Karishara_01', 'Pet_Katrin_01', 'Pet_Kay_01', 'Pet_Kirke_01', 'Pet_Lancelot_01', 'Pet_Lilith_01', 'Pet_Lisa_01', 'Pet_Lohengrin_01', 'Pet_Lua_01', 'Pet_Lueira_01', 'Pet_Merlin_01', 'Pet_SMerry_01', 'Pet_Morgana_01', 'Pet_Morganlefay_01', 'Pet_Nesha_01', 'Pet_Nightsong_01', 'Pet_Midnight_01', 'Pet_Palamedes_01', 'Pet_Phoenix_01', 'Pet_Belle_01', 'Pet_Raccoon_01', 'Pet_Ran_01', 'Pet_Retriever_01', 'Pet_Gold_01', 'Pet_MaidRita_01', 'Pet_Shiba_01', 'Pet_Slime_01', 'Pet_Tiamat_01', 'Pet_Tristan_01', 'Pet_Vivien_01', 'Pet_Whitey_01', 'Pet_Yumi_01'];
+
+        // Weapon filename mapping - display name -> actual filename
+        const weaponFilenames = {
+            'Abyssal Bow': 'abyssal-bow',
+            'Abyssal Greatsword': 'abyssal-greatsword',
+            'Abyssal Staff': 'abyssal-staff',
+            'Aquarius': 'aquarius',
+            'Arbalest': 'arbalest',
+            'Arguros Toxos': 'arguros-toxos',
+            'Arondight': 'arondight',
+            'Balisada': 'balisada',
+            'Claiomh Solais Chaotic': 'claiomh-solais-chaotic',
+            'Cosmic Axe': 'cosmic-axe',
+            'Death Scythe': 'death-scythe',
+            'Demon Blade Hellhad': 'demon-blade-hellhad',
+            'Dragon Buster': 'dragon-buster',
+            'Dragon Killer': 'dragon-killer',
+            'Dragon Slayer': 'dragon-slayer',
+            'DualBlade': 'dual-blade',
+            'Durendal': 'durendal',
+            'Failnaught': 'failnaught',
+            'Fire Dragon\'s Banner': 'fire-dragons-banner',
+            'Fire Dragon\'s Curved Sword': 'fire-dragons-curved-sword',
+            'Fire Dragon\'s Great Bow': 'fire-dragons-great-bow',
+            'Fragarach': 'fragarach',
+            'Gambanteinn': 'gambanteinn',
+            'Goblin Slasher': 'goblin-slasher',
+            'Goddess Bow': 'goddess-bow',
+            'Goddess Greatsword': 'goddess-greatsword',
+            'Goddess Staff': 'goddess-staff',
+            'Heavy Bow': 'heavy-bow',
+            'Holy Fire Bow': 'holy-fire-bow',
+            'Holy Fire Staff': 'holy-fire-staff',
+            'Holy Fire Sword': 'holy-fire-sword',
+            'Infinity Staff': 'infinity-staff',
+            'Iokheira': 'iokheira',
+            'Rampage Bow': 'rampage-bow',
+            'Red Dragon Tooth': 'red-dragon-tooth',
+            'Red Ribboned Bow': 'red-ribboned-bow',
+            'Red Ribboned Staff': 'red-ribboned-staff',
+            'Red Ribboned Sword': 'red-ribboned-sword',
+            'Royal Cow Axe': 'royal-cow-axe',
+            'Royal Cow Bowgun': 'royal-cow-bowgun',
+            'Royal Cow Staff': 'royal-cow-staff',
+            'Sagittarius': 'sagittarius',
+            'Sumarbrander': 'sumarbrander',
+            'Tempest Bow': 'tempest-bow',
+            'Tempest Staff': 'tempest-staff',
+            'Tempest Sword': 'tempest-sword',
+            'Thunderclap': 'thunderclap',
+            'Trident': 'trident',
+            'Tyrfingr': 'tyrfingr',
+            'Void Staff': 'void-staff',
+            'White Feather Fan': 'white-feather-fan'
+        };
+
+        // Weapon Database with class restrictions
+        const rawWeapons = ['Abyssal Bow', 'Abyssal Greatsword', 'Abyssal Staff', 'Aquarius', 'Arbalest', 'Arguros Toxos', 'Arondight', 'Balisada', 'Claiomh Solais Chaotic', 'Cosmic Axe', 'Death Scythe', 'Demon Blade Hellhad', 'Dragon Buster', 'Dragon Killer', 'Dragon Slayer', 'DualBlade', 'Durendal', 'Failnaught', 'Fire Dragon\'s Banner', 'Fire Dragon\'s Curved Sword', 'Fire Dragon\'s Great Bow', 'Fragarach', 'Gambanteinn', 'Goblin Slasher', 'Goddess Bow', 'Goddess Greatsword', 'Goddess Staff', 'Heavy Bow', 'Holy Fire Bow', 'Holy Fire Staff', 'Holy Fire Sword', 'Infinity Staff', 'Iokheira', 'Rampage Bow', 'Red Dragon Tooth', 'Red Ribboned Bow', 'Red Ribboned Staff', 'Red Ribboned Sword', 'Royal Cow Axe', 'Royal Cow Bowgun', 'Royal Cow Staff', 'Sagittarius', 'Sumarbrander', 'Tempest Bow', 'Tempest Staff', 'Tempest Sword', 'Thunderclap', 'Trident', 'Tyrfingr', 'Void Staff', 'White Feather Fan'];
+
+        const weaponClasses = {
+            // Add unique: true to any entry to prevent that item from being equipped on multiple characters.
+            // Example: 'Arondight': { class: 'Knight', unique: true },
+            'Abyssal Bow': { class: 'Archer' },
+            'Abyssal Greatsword': { class: 'Knight' },
+            'Abyssal Staff': { class: 'Wizard'},
+            'Aquarius': { class: 'Wizard', class: 'Healer' },
+            'Arbalest': { class: 'Archer' },
+            'Arguros Toxos': { class: 'Archer' },
+            'Arondight': { class: 'Knight' },
+            'Balisada': { class: 'Knight', unique: true },
+            'Claiomh Solais Chaotic': { class: 'Wizard' },
+            'Cosmic Axe': { class: 'Knight' },
+            'Death Scythe': { class: 'Wizard' },
+            'Demon Blade Hellhad': { class: 'Knight' },
+            'Dragon Buster': { class: 'Wizard' },
+            'Dragon Killer': { class: 'Archer' },
+            'Dragon Slayer': { class: 'Knight' },
+            'DualBlade': { class: 'Knight', unique: true },
+            'Durendal': { class: 'Knight' },
+            'Failnaught': { class: 'Archer', unique: true },
+            'Fire Dragon\'s Banner': { class: 'Wizard', class: 'Healer' },
+            'Fire Dragon\'s Curved Sword': { class: 'Knight' },
+            'Fire Dragon\'s Great Bow': { class: 'Archer' },
+            'Fragarach': { class: 'Knight' },
+            'Gambanteinn': { class: 'Wizard' },
+            'Goblin Slasher': { class: 'Knight' },
+            'Goddess Bow': { class: 'Archer' },
+            'Goddess Greatsword': { class: 'Knight' },
+            'Goddess Staff': { class: 'Wizard' },
+            'Heavy Bow': { class: 'Archer' },
+            'Holy Fire Bow': { class: 'Archer' },
+            'Holy Fire Staff': { class: 'Wizard' },
+            'Holy Fire Sword': { class: 'Knight' },
+            'Infinity Staff': { class: 'Wizard', class: 'Healer', unique: true },
+            'Iokheira': { class: 'Archer' },
+            'Rampage Bow': { class: 'Archer' },
+            'Red Dragon Tooth': { class: 'Knight' },
+            'Red Ribboned Bow': { class: 'Archer' },
+            'Red Ribboned Staff': { class: 'Wizard' },
+            'Red Ribboned Sword': { class: 'Knight' },
+            'Royal Cow Axe': { class: 'Knight' },
+            'Royal Cow Bowgun': { class: 'Archer' },
+            'Royal Cow Staff': { class: 'Wizard' },
+            'Sagittarius': { class: 'Archer' },
+            'Sumarbrander': { class: 'Knight' },
+            'Tempest Bow': { class: 'Archer' },
+            'Tempest Staff': { class: 'Wizard', class: 'Healer' },
+            'Tempest Sword': { class: 'Knight' },
+            'Thunderclap': { class: 'Wizard' },
+            'Trident': { class: 'Knight', unique: true },
+            'Tyrfingr': { class: 'Knight' },
+            'Void Staff': { class: 'Wizard', class: 'Healer' },
+            'White Feather Fan': { class: 'Wizard' }
+        };
+
+        // ─── Armor Database ───────────────────────────────────────────
+        // ADD ARMOR: push the display name to rawArmor, add the filename to
+        // armorFilenames (kebab-case, no extension), and optionally restrict
+        // it to a class in armorClasses.  The image must live at:
+        //   armor/<filename>.webp
+        const rawArmor = [
+            // 'Example Armor',   // ← add names here
+            'Royal Cow Armor', 'Silver Armor', 'Gold Armor', 'Abyssal Armor', 'Dragon Armor', 'Red Ribboned Robe', 'Tempest Armor', 'Gorgon Armor', 'Holy Fire Armor', 'Mirror armor', 'Mithril armor', 'Merlin\'s Robe', 'Armor of the dead', 'Fire Dragon\'s Armor', 'Wild Combat Suit', 'Wrath of Agnes', 'Goddess Armor', 'Absolute Armor'];
+
+        const armorFilenames = {
+            // 'Example Armor': 'example-armor',   // ← display name → filename
+            'Royal Cow Armor': 'royal-cow-armor',
+            'Silver Armor': 'silver-armor',
+            'Gold Armor': 'gold-armor',
+            'Abyssal Armor': 'abyssal-armor',
+            'Dragon Armor': 'dragon-armor',
+            'Red Ribboned Robe': 'red-ribboned-robe',
+            'Tempest Armor': 'tempest-armor',
+            'Gorgon Armor': 'gorgon-armor',
+            'Holy Fire Armor': 'holy-fire-armor',
+            'Mirror armor': 'mirror-armor',
+            'Mithril armor': 'mithril-armor',
+            'Merlin\'s Robe': 'merlins-robe',
+            'Armor of the dead': 'armor-of-the-dead',
+            'Fire Dragon\'s Armor': 'fire-dragons-armor',
+            'Wild Combat Suit': 'wild-combat-suit',
+            'Wrath of Agnes': 'wrath-of-agnes',
+            'Goddess Armor': 'goddess-armor',
+            'Absolute Armor': 'absolute-armor',
+        };
+
+        const armorClasses = {
+            // Add unique: true to any entry to make that armor a one-slot-only item.
+            // 'Example Armor': { class: 'Knight', unique: true },
+            'Wrath of Agnes': { unique: true },
+            'Mirror armor': { unique: true },   
+            'Absolute Armor': { unique: true }
+        };
+
+        // ─── Helmet Database ──────────────────────────────────────────
+        // ADD HELMETS: same pattern as armor above.
+        // Image path: helmets/<filename>.webp
+        const rawHelmets = [
+            // 'Example Helmet',
+            'Abyssal Ring', 'Achilles Helmet', 'Aegis', 'Claiomh Solais Ring', 'Crown Of The Dead', 'Fire Dragons\'s Helmet', 'Goddess Ring', 'Healing Goddess Statue', 'Holy Fire Helmet', 'jade Seal', 'Red Hare', 'Red Ribboned Ring', 'Royal Cow Crown', 'Stiletto Of Jealousy', 'Tempest Helmet', 'Tiamat\'s Signature', 'Transformation Scroll', 'Wild Hair Band', 'Destrutions Favor'];
+
+        const helmetFilenames = {
+            // 'Example Helmet': 'example-helmet',
+                'Abyssal Ring': 'abyssal-ring',
+                'Achilles Helmet': 'achilles-helmet',
+                'Aegis': 'aegis',
+                'Claiomh Solais Ring': 'claiomh-solais-ring',
+                'Crown Of The Dead': 'crown-of-the-dead',
+                'Fire Dragons\'s Helmet': 'fire-dragons-helmet',
+                'Goddess Ring': 'goddess-ring', 
+                'Healing Goddess Statue': 'healing-goddess-statue',
+                'Holy Fire Helmet': 'holy-fire-helmet',
+                'jade Seal': 'jade-seal',
+                'Red Hare': 'red-hare',
+                'Red Ribboned Ring': 'red-ribboned-ring',
+                'Royal Cow Crown': 'royal-cow-crown',
+                'Stiletto Of Jealousy': 'stiletto-of-jealousy',
+                'Tempest Helmet': 'tempest-helmet',
+                'Tiamat\'s Signature': 'tiamat-signature',
+                'Transformation Scroll': 'transformation-scroll',
+                'Wild Hair Band': 'wild-hair-band',
+                'Destrutions Favor': 'destructions-favor'
+        };
+        const helmetClasses = {
+            // Add unique: true to any entry to make that helmet a one-slot-only item.
+            // 'Example Helmet': { class: 'Archer', unique: true },
+            'Stiletto Of Jealousy': { unique: true },
+            'Transformation Scroll': { unique: true },
+            'Tiamat\'s Signature': { unique: true },
+            'Red Hare': { unique: true }
+        };
+
+        // ─── Rune Database ────────────────────────────────────────────
+        // ADD RUNES: same pattern as armor above.
+        // Image path: runes/<filename>.webp
+        const rawRunes = [
+            // 'Example Rune',
+            'Abyssal Rune', 'Celestial Rune', 'Claiomh Solais Rune', 'Extreme Rune', 'Goddess Rune', 'Holy Fire Rune', 'Memories Of Flame', 'Red Ribboned Rune', 'Royal Cow Rune', 'Rune Of Healing', 'Rune Of Focus', 'Rune Of The Deep Sea', 'Swordbringer Rune', 'Tempest Rune', 'ThunderHeart'];
+        
+            const runeFilenames = {
+            // 'Example Rune': 'example-rune',
+                'Abyssal Rune': 'abyssal-rune',
+                'Celestial Rune': 'celestial-rune',
+                'Claiomh Solais Rune': 'claiomh-solais-rune',
+                'Extreme Rune': 'extreme-rune',
+                'Goddess Rune': 'goddess-rune',
+                'Holy Fire Rune': 'holy-fire-rune',
+                'Memories Of Flame': 'memories-of-flame',
+                'Red Ribboned Rune': 'red-ribboned-rune',
+                'Royal Cow Rune': 'royal-cow-rune',
+                'Rune Of Healing': 'rune-of-healing',
+                'Rune Of Focus': 'rune-of-focus',
+                'Rune Of The Deep Sea': 'rune-of-the-deep-sea',
+                'Swordbringer Rune': 'swordbringer-rune',
+                'Tempest Rune': 'tempest-rune',
+                'ThunderHeart': 'thunderheart'    
+        };
+        const runeClasses = {
+            // Add unique: true to any entry to make that rune a one-slot-only item.
+            // 'Example Rune': { class: 'Wizard', unique: true },
+            'Rune Of Healing': { class: 'Healer' },
+            'Rune Of Focus': { class: 'Knight', class: 'Wizard', class: 'Archer'},
+            'Memories Of Flame': { unique: true },
+            'extreme Rune': { unique: true },
+            'Celestial Rune': { unique: true },
+        };
+
+        const db = {
+            characters: rawCharacters.map(f => ({ name: parseName(f), img: `rawCharacters/${f}.webp` })),
+            cards: rawCards.map(f => ({ name: parseName(f), img: `rawCards/${f}.webp` })),
+            pets: rawPets.map(f => ({ name: parseName(f), img: `rawPets/${f}.webp` })),
+            gems: rawGems.map(name => ({ name, img: `gems/${name}.webp`, element: gemElements[name] })),
+            Weapon: rawWeapons.map(name => ({ name, img: `weapons/${weaponFilenames[name]}.webp`, class: weaponClasses[name]?.class, unique: weaponClasses[name]?.unique || false })),
+            Armor:  rawArmor.map(name => ({ name, img: `armor/${armorFilenames[name] || name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}.webp`, class: armorClasses[name]?.class, unique: armorClasses[name]?.unique || false })),
+            Helmet: rawHelmets.map(name => ({ name, img: `helmets/${helmetFilenames[name] || name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}.webp`, class: helmetClasses[name]?.class, unique: helmetClasses[name]?.unique || false })),
+            Rune:   rawRunes.map(name => ({ name, img: `runes/${runeFilenames[name] || name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-')}.webp`, class: runeClasses[name]?.class, unique: runeClasses[name]?.unique || false }))
+        };
+
+        let currentActiveSection = null, currentActiveCategory = null, currentGearCategory = null;
+
+        // ── Filter State ──────────────────────────────────────
+        const activeFilters = { rarity: new Set(), position: new Set(), class: new Set(), element: new Set() };
+
+        // Map old position names to new icon names
+        const positionMap = { 'Front': 'Forward', 'Middle': 'Center', 'Back': 'Backward' };
+
+        function toggleAllFilter(cat) {
+            // Clear all specific selections for this category
+            const allValues = { rarity: ['3','4','5'], position: ['Forward','Center','Backward'], class: ['Knight','Archer','Wizard','Healer'], element: ['Fire','Frost','Nature','Holy','Shock','Chaos','Radiance'] };
+            allValues[cat].forEach(val => {
+                activeFilters[cat].delete(val);
+                const btn = document.getElementById(`fbtn-${cat}-${val}`);
+                btn && btn.classList.remove('active');
+            });
+            // Set "all" button active
+            const allBtn = document.getElementById(`fbtn-${cat}-all`);
+            allBtn && allBtn.classList.add('active');
+            applyCharacterFilters();
+        }
+
+        function toggleFilter(cat, val) {
+            const btn = document.getElementById(`fbtn-${cat}-${val}`);
+            const allBtn = document.getElementById(`fbtn-${cat}-all`);
+            if (activeFilters[cat].has(val)) {
+                activeFilters[cat].delete(val);
+                btn && btn.classList.remove('active');
+                // If nothing selected, re-activate "all"
+                if (activeFilters[cat].size === 0) {
+                    allBtn && allBtn.classList.add('active');
+                }
+            } else {
+                activeFilters[cat].add(val);
+                btn && btn.classList.add('active');
+                // Deactivate "all" when a specific is chosen
+                allBtn && allBtn.classList.remove('active');
+            }
+            applyCharacterFilters();
+        }
+
+        function resetFilters() {
+            ['rarity','position','class','element'].forEach(cat => {
+                activeFilters[cat].forEach(val => {
+                    const btn = document.getElementById(`fbtn-${cat}-${val}`);
+                    btn && btn.classList.remove('active');
+                });
+                activeFilters[cat].clear();
+                const allBtn = document.getElementById(`fbtn-${cat}-all`);
+                allBtn && allBtn.classList.add('active');
+            });
+            document.getElementById('modal-search').value = '';
+            applyCharacterFilters();
+        }
+
+        function applyCharacterFilters() {
+            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            const chars = db.characters;
+            const filtered = chars.filter(item => {
+                const info = getCharInfo(item.name);
+                // Map DB position (Front/Middle/Back) to filter values (Forward/Center/Backward)
+                const mappedPos = positionMap[info.position] || info.position || '';
+                if (search && !item.name.toLowerCase().includes(search)) return false;
+                if (activeFilters.rarity.size   && !activeFilters.rarity.has(info.rarity || ''))    return false;
+                if (activeFilters.position.size && !activeFilters.position.has(mappedPos))           return false;
+                if (activeFilters.class.size    && !activeFilters.class.has(info.class || ''))       return false;
+                if (activeFilters.element.size  && !activeFilters.element.has(info.element || ''))   return false;
+                return true;
+            });
+            renderModalGrid(filtered, true);
+            const countEl = document.getElementById('char-showing-count');
+            if (countEl) countEl.textContent = `Showing ${filtered.length} of ${chars.length} Characters`;
+        }
+        // ─────────────────────────────────────────────────────
+
+        // ── Pet Filter State ──────────────────────────────────
+        const activePetFilters = { rarity: new Set(), element: new Set() };
+
+        function toggleAllPetFilter(cat) {
+            const allValues = { rarity: ['3','4','5'], element: ['Fire','Frost','Nature','Holy','Shock','Chaos','Radiance'] };
+            allValues[cat].forEach(val => {
+                activePetFilters[cat].delete(val);
+                const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+                btn && btn.classList.remove('active');
+            });
+            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+            allBtn && allBtn.classList.add('active');
+            applyPetFilters();
+        }
+
+        function togglePetFilter(cat, val) {
+            const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+            if (activePetFilters[cat].has(val)) {
+                activePetFilters[cat].delete(val);
+                btn && btn.classList.remove('active');
+                if (activePetFilters[cat].size === 0) {
+                    allBtn && allBtn.classList.add('active');
+                }
+            } else {
+                activePetFilters[cat].add(val);
+                btn && btn.classList.add('active');
+                allBtn && allBtn.classList.remove('active');
+            }
+            applyPetFilters();
+        }
+
+        function resetPetFilters() {
+            ['rarity','element'].forEach(cat => {
+                activePetFilters[cat].forEach(val => {
+                    const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+                    btn && btn.classList.remove('active');
+                });
+                activePetFilters[cat].clear();
+                const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+                allBtn && allBtn.classList.add('active');
+            });
+            document.getElementById('modal-search').value = '';
+            applyPetFilters();
+        }
+
+        function applyPetFilters() {
+            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            const pets = db.pets;
+            const filtered = pets.filter(item => {
+                const info = getCharInfo(item.name);
+                if (search && !item.name.toLowerCase().includes(search)) return false;
+                if (activePetFilters.rarity.size  && !activePetFilters.rarity.has(info.rarity || ''))  return false;
+                if (activePetFilters.element.size && !activePetFilters.element.has(info.element || '')) return false;
+                return true;
+            });
+            renderModalGrid(filtered, false);
+            const countEl = document.getElementById('pet-showing-count');
+            if (countEl) countEl.textContent = `Showing ${filtered.length} of ${pets.length} Pets`;
+        }
+        // ─────────────────────────────────────────────────────
+
+        function openModal(slotIndex, type, gearCat = null) {
+            currentActiveSection = slotIndex; currentActiveCategory = type; currentGearCategory = gearCat;
+            document.getElementById('modal-title').innerText = `Select ${gearCat || type}`;
+            const searchEl = document.getElementById('modal-search');
+            searchEl.value = '';
+            const sectionLabel = gearCat || (type === 'character' ? 'characters' : type === 'card' ? 'cards' : type === 'pet' ? 'pets' : type === 'gem' ? 'gems' : type);
+            searchEl.placeholder = `Search ${sectionLabel} by name...`;
+            const isChar = type === 'character';
+            const isPet  = type === 'pet';
+            document.getElementById('character-filters').classList.toggle('hidden', !isChar);
+            document.getElementById('pet-filters').classList.toggle('hidden', !isPet);
+            if (isChar) {
+                resetFilters();
+            } else if (isPet) {
+                resetPetFilters();
+            } else if (type === 'gear') {
+                // For gear, filter by character class
+                const charName = slotData[slotIndex].character;
+                const charInfo = getCharInfo(charName);
+                const charClass = charInfo.class || '';
+                const gearItems = db[gearCat] || [];
+                
+                // Filter items to only show those matching the character's class
+                const filteredItems = charClass
+                    ? gearItems.filter(item => !item.class || item.class === charClass)
+                    : gearItems;
+                
+                renderModalGrid(filteredItems, false);
+            } else if (type === 'gem') {
+                // For gems, filter by pet's element
+                const match = slotIndex.match(/pet_(\d+)_gem_\d+/);
+                if (match) {
+                    const petIdx = parseInt(match[1]);
+                    const petName = petsData[petIdx].name;
+                    const petInfo = getCharInfo(petName);
+                    const petElement = petInfo.element || '';
+                    const gemItems = db.gems || [];
+                    
+                    // Filter gems to only show those matching the pet's element
+                    const filteredItems = petElement
+                        ? gemItems.filter(item => item.element === petElement)
+                        : gemItems;
+                    
+                    renderModalGrid(filteredItems, false);
+                }
+            } else if (type === 'ultimate') {
+                // For ultimate rotation, only show characters currently in the team
+                const teamCharacters = slotData
+                    .map(slot => slot.character)
+                    .filter(char => char !== null && char !== undefined);
+                const allCharacters = db.characters || [];
+                const filteredItems = allCharacters.filter(char => teamCharacters.includes(char.name));
+                renderModalGrid(filteredItems, false);
+            } else if (type === 'card') {
+                renderModalGrid(db.cards, false);
+            } else if (type === 'pet') {
+                renderModalGrid(db.pets, false);
+            } else {
+                renderModalGrid(db[`${type}s`] || [], false);
+            }
+            document.getElementById('selection-modal').classList.remove('hidden');
+        }
+
+        function renderModalGrid(items, isChar) {
+            const grid = document.getElementById('modal-grid');
+            grid.innerHTML = '';
+
+            // ── Always-visible "None / Clear" tile ──────────────
+            const noneBox = document.createElement('div');
+            noneBox.className = "item-card bg-[#1a1c28] border border-dashed border-slate-600 rounded-lg p-1.5 flex flex-col items-center justify-center cursor-pointer hover:border-red-500 hover:bg-[#1f1014] transition-all";
+            noneBox.style.cssText = 'aspect-ratio:3/4;';
+            noneBox.onclick = () => clearSlot();
+            noneBox.innerHTML = `
+                <div class="w-full flex-1 flex flex-col items-center justify-center gap-1.5" style="min-height:60px">
+                    <i class="fa-solid fa-xmark text-xl text-slate-500"></i>
+                </div>
+                <span class="text-[10px] font-bold text-slate-500 text-center leading-tight w-full truncate">None</span>
+            `;
+            grid.appendChild(noneBox);
+            // ────────────────────────────────────────────────────
+
+            // Add x2 repeat tile when selecting an ultimate rotation item
+            if (currentActiveCategory === 'ultimate') {
+                const x2Box = document.createElement('div');
+                x2Box.className = "item-card bg-[#1a1c28] border border-dashed border-slate-600 rounded-lg p-1.5 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-[#0c1626] transition-all";
+                x2Box.style.cssText = 'aspect-ratio:3/4;';
+                x2Box.onclick = () => selectUltimateX2();
+                x2Box.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center gap-1.5" style="min-height:60px">
+                        <span style="font-size:24px;font-weight:700;color:#60a5fa;">x2</span>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-400 text-center leading-tight w-full truncate">Repeat</span>
+                `;
+                grid.appendChild(x2Box);
+            }
+
+            items.forEach(item => {
+                const isPet = !isChar && currentActiveCategory === 'pet';
+                const info = (isChar || isPet) ? getCharInfo(item.name) : {};
+                const el = info.element || '';
+                const rar = info.rarity || '';
+                const rarColor = rar === '5' ? '#fbbf24' : rar === '4' ? '#a78bfa' : '#64748b';
+                const itemBox = document.createElement('div');
+                itemBox.className = "item-card bg-[#1a1c28] border border-[#2d3142] rounded-lg p-1.5 flex flex-col items-center justify-between cursor-pointer hover:border-[#4b6bfb] hover:bg-[#1e2240] transition-all";
+                itemBox.style.cssText = 'aspect-ratio:3/4;';
+                itemBox.onclick = () => selectItem(item);
+                itemBox.innerHTML = isChar ? `
+                    <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden relative" style="min-height:60px">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover object-top" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+                        <div style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:#475569;font-size:9px">${item.name[0]}</div>
+                        ${rar ? `<span style="position:absolute;top:3px;right:3px;font-size:8px;font-weight:700;color:${rarColor};text-shadow:0 1px 3px #000">${rar}★</span>` : ''}
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
+                    ${el ? `<span class="char-el-badge badge-${el} mt-0.5">${el}</span>` : ''}
+                ` : isPet ? `
+                    <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden relative" style="min-height:60px">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        ${rar ? `<span style="position:absolute;top:3px;right:3px;font-size:8px;font-weight:700;color:${rarColor};text-shadow:0 1px 3px #000">${rar}★</span>` : ''}
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
+                    ${el ? `<span class="char-el-badge badge-${el} mt-0.5">${el}</span>` : ''}
+                ` : `
+                    <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden" style="min-height:60px">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
+                `;
+                grid.appendChild(itemBox);
+            });
+        }
+
+        function filterGrid() {
+            if (currentActiveCategory === 'character') {
+                applyCharacterFilters();
+            } else if (currentActiveCategory === 'pet') {
+                applyPetFilters();
+            } else {
+                applyGenericSearch();
+            }
+        }
+        function filterCharacters() { applyCharacterFilters(); }
+
+        function applyGenericSearch() {
+            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            let items = [];
+            if (currentActiveCategory === 'card') {
+                items = db.cards;
+            } else if (currentActiveCategory === 'pet') {
+                items = db.pets;
+            } else if (currentActiveCategory === 'gem') {
+                // Filter gems by pet's element
+                const match = currentActiveSection.match(/pet_(\d+)_gem_\d+/);
+                if (match) {
+                    const petIdx = parseInt(match[1]);
+                    const petName = petsData[petIdx].name;
+                    const petInfo = getCharInfo(petName);
+                    const petElement = petInfo.element || '';
+                    items = db.gems || [];
+                    items = petElement ? items.filter(item => item.element === petElement) : items;
+                }
+            } else if (currentActiveCategory === 'gear') {
+                const charName = slotData[currentActiveSection]?.character;
+                const charInfo = getCharInfo(charName);
+                const charClass = charInfo.class || '';
+                const gearItems = db[currentGearCategory] || [];
+                items = charClass ? gearItems.filter(item => !item.class || item.class === charClass) : gearItems;
+            }
+            const filtered = search ? items.filter(i => i.name.toLowerCase().includes(search)) : items;
+            renderModalGrid(filtered, false);
+        }
+
+        function selectItem(item) {
+            if (currentActiveCategory === 'character') {
+                // Clear this character from any other slot first
+                slotData.forEach((slot, i) => {
+                    if (i !== currentActiveSection && slot.character === item.name) {
+                        slot.character = null;
+                    }
+                });
+                slotData[currentActiveSection].character = item.name;
+            } else if (currentActiveCategory === 'card') {
+                // Clear this card from any other slot first
+                slotData.forEach((slot, i) => {
+                    if (i !== parseInt(currentActiveSection) && slot.card === item.name) {
+                        slot.card = null;
+                    }
+                });
+                slotData[currentActiveSection].card = item.name;
+            } else if (currentActiveCategory === 'gear') {
+                // If this gear item is flagged unique, clear it from any other slot's same category
+                const gearEntry = (db[currentGearCategory] || []).find(g => g.name === item.name);
+                if (gearEntry && gearEntry.unique) {
+                    slotData.forEach((slot, i) => {
+                        if (i !== parseInt(currentActiveSection) && slot.gear[currentGearCategory] === item.name) {
+                            slot.gear[currentGearCategory] = null;
+                        }
+                    });
+                }
+                slotData[currentActiveSection].gear[currentGearCategory] = item.name;
+            } else if (currentActiveCategory === 'pet') {
+                const slotIndex = parseInt(currentActiveSection.replace('p', '')) - 1;
+                // Clear this pet from any other pet slot first
+                petsData.forEach((pet, i) => {
+                    if (i !== slotIndex && pet.name === item.name) {
+                        pet.name = null;
+                        pet.gems = [null, null, null, null];
+                    }
+                });
+                petsData[slotIndex].name = item.name;
+            } else if (currentActiveCategory === 'gem') {
+                const match = currentActiveSection.match(/pet_(\d+)_gem_(\d+)/);
+                if (match) {
+                    const petIdx = parseInt(match[1]);
+                    const gemIdx = parseInt(match[2]);
+                    petsData[petIdx].gems[gemIdx] = item.name;
+                    // Validate this specific gem slot to ensure it's compatible with the pet
+                    validatePetGems(petIdx);
+                }
+            } else if (currentActiveCategory === 'ultimate') {
+                // Allow duplicates in ultimate rotation - no clearing needed
+                ultimateRotation[currentActiveSection].character = item.name;
+                ultimateRotation[currentActiveSection].time = ultimateRotation[currentActiveSection].time || '';
+                renderUltimateRotation();
+            }
+            renderTeamGrid();
+            if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
+            closeModal();
+        }
+
+        function selectUltimateX2() {
+            if (typeof currentActiveSection !== 'number') return;
+            ultimateRotation[currentActiveSection].character = 'x2';
+            ultimateRotation[currentActiveSection].time = '';
+            renderUltimateRotation();
+            closeModal();
+        }
+
+        function clearSlot() {
+            if (currentActiveCategory === 'character') {
+                slotData[currentActiveSection].character = null;
+                slotData[currentActiveSection].card = null;
+                slotData[currentActiveSection].gear = { Weapon: null, Armor: null, Helmet: null, Rune: null };
+            } else if (currentActiveCategory === 'card') {
+                slotData[currentActiveSection].card = null;
+            } else if (currentActiveCategory === 'gear') {
+                slotData[currentActiveSection].gear[currentGearCategory] = null;
+            } else if (currentActiveCategory === 'pet') {
+                const slotIndex = parseInt(currentActiveSection.replace('p', '')) - 1;
+                petsData[slotIndex].name = null;
+                petsData[slotIndex].gems = [null, null, null, null];
+            } else if (currentActiveCategory === 'gem') {
+                const match = currentActiveSection.match(/pet_(\d+)_gem_(\d+)/);
+                if (match) {
+                    petsData[parseInt(match[1])].gems[parseInt(match[2])] = null;
+                }
+            } else if (currentActiveCategory === 'ultimate') {
+                ultimateRotation[currentActiveSection].character = null;
+                renderUltimateRotation();
+            }
+            renderTeamGrid();
+            if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
+            closeModal();
+        }
+
+        function closeModal() { document.getElementById('selection-modal').classList.add('hidden'); }
+        
+        function setupPetDragDrop() {
+            document.querySelectorAll('[data-pet-idx]').forEach(slot => {
+                slot.ondragstart = (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('dragType', 'pet');
+                    e.dataTransfer.setData('dragIndex', slot.dataset.petIdx);
+                    slot.style.opacity = '0.5';
+                };
+                slot.ondragend = (e) => {
+                    slot.style.opacity = '1';
+                    // Reset all pet slots to be safe
+                    document.querySelectorAll('[data-pet-idx]').forEach(s => {
+                        s.style.opacity = '1';
+                    });
+                };
+                slot.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                };
+                slot.ondrop = (e) => {
+                    e.preventDefault();
+                    const dragType = e.dataTransfer.getData('dragType');
+                    const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'));
+                    if (dragType === 'pet') {
+                        const toIdx = parseInt(slot.dataset.petIdx);
+                        [petsData[dragIndex], petsData[toIdx]] = [petsData[toIdx], petsData[dragIndex]];
+                        // Reset all opacities immediately
+                        document.querySelectorAll('[data-pet-idx]').forEach(s => {
+                            s.style.opacity = '1';
+                        });
+                        renderPets();
+                    }
+                };
+            });
+        }
+        
+        function setupFormationDragDrop() {
+            document.querySelectorAll('[data-form-idx]').forEach(slot => {
+                slot.ondragstart = (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('dragType', 'formation');
+                    e.dataTransfer.setData('dragIndex', slot.dataset.formIdx);
+                    slot.style.opacity = '0.5';
+                };
+                slot.ondragend = (e) => {
+                    slot.style.opacity = '1';
+                };
+                slot.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                };
+                slot.ondrop = (e) => {
+                    e.preventDefault();
+                    const dragType = e.dataTransfer.getData('dragType');
+                    const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'));
+                    if (dragType === 'formation') {
+                        const toIdx = parseInt(slot.dataset.formIdx);
+                        [formationSlots[dragIndex], formationSlots[toIdx]] = [formationSlots[toIdx], formationSlots[dragIndex]];
+                        updateFormation();
+                    }
+                };
+            });
+        }
+        
+        function clearAllSlots() {
+            slotData = [
+                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
+                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null }
+            ];
+            petsData = [
+                { name: null, gems: [null, null, null, null] },
+                { name: null, gems: [null, null, null, null] },
+                { name: null, gems: [null, null, null, null] }
+            ];
+            formationSlots = [1, 3, 4, 0, 2, -1];
+            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+            const titleEl = document.querySelector('h1[contenteditable]');
+            if (titleEl) titleEl.innerText = 'My Lost Sword Team';
+            renderTeamGrid();
+            setupFormationDragDrop();
+            renderUltimateRotation();
+            // Also clear damage dealt graph
+            if (typeof clearBattleStats === 'function') clearBattleStats();
+        }
+        
+        // Initialize
+        renderTeamGrid();
+        setupFormationDragDrop();
+
+        // Initialize Ultimate Rotation
+        let ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+        renderUltimateRotation();
+
+        function renderUltimateRotation() {
+            const container = document.getElementById('ultimate-rotation-container');
+            if (!container) return;
+            
+            // Find the x2 marker (repeat slot)
+            const repeatIdx = ultimateRotation.findIndex(slot => slot.character === 'x2');
+            
+            container.innerHTML = '';
+            ultimateRotation.forEach((slot, idx) => {
+                // Hide slots after the repeat marker
+                if (repeatIdx !== -1 && idx > repeatIdx) return;
+                
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'ult-rotation-slot';
+                
+                // Character icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'ult-char-icon' + (slot.character ? '' : ' empty');
+                iconDiv.style.cursor = 'pointer';
+                iconDiv.onclick = () => selectUltimateCharacter(idx);
+                
+                if (slot.character === 'x2') {
+                    iconDiv.innerHTML = '<span style="font-size:14px;font-weight:700;color:#64748b;">x2</span>';
+                } else if (slot.character) {
+                    const charEntry = db.characters ? db.characters.find(c => c.name === slot.character) : null;
+                    if (charEntry && charEntry.img) {
+                        const img = document.createElement('img');
+                        img.src = charEntry.img;
+                        img.alt = slot.character;
+                        iconDiv.innerHTML = '';
+                        iconDiv.appendChild(img);
+                    } else {
+                        iconDiv.innerHTML = '<span style="font-size:10px;font-weight:700;color:#475569;">' + (slot.character.substring(0, 2).toUpperCase()) + '</span>';
+                    }
+                }
+                
+                slotDiv.appendChild(iconDiv);
+                
+                // Time input (hidden if x2)
+                if (slot.character !== 'x2') {
+                    const timeInput = document.createElement('input');
+                    timeInput.type = 'text';
+                    timeInput.className = 'ult-time-input';
+                    timeInput.placeholder = 'Time';
+                    timeInput.value = slot.time;
+                    timeInput.onchange = (e) => {
+                        ultimateRotation[idx].time = e.target.value;
+                    };
+                    slotDiv.appendChild(timeInput);
+                }
+                
+                container.appendChild(slotDiv);
+                
+                // Add arrow between slots (except after the last visible one)
+                if (idx < ultimateRotation.length - 1 && (repeatIdx === -1 || idx < repeatIdx)) {
+                    const arrowDiv = document.createElement('div');
+                    arrowDiv.className = 'ult-arrow';
+                    arrowDiv.innerHTML = '&gt;';
+                    container.appendChild(arrowDiv);
+                }
+            });
+            
+            // Add +/- controls after the last visible slot
+            const controlDiv = document.createElement('div');
+            controlDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;';
+            controlDiv.innerHTML = `
+                <button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>
+                ${ultimateRotation.length > 2 ? `<button onclick="removeUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#f87171;font-size:20px;font-weight:700;" title="Remove slot" onmouseover="this.style.borderColor='#f87171';this.style.background='#2a121d'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">-</button>` : ''}
+            `;
+            container.appendChild(controlDiv);
+        }
+
+        function removeUltimateSlot() {
+            if (ultimateRotation.length <= 2) return;
+            ultimateRotation.pop();
+            renderUltimateRotation();
+        }
+        function selectUltimateCharacter(slotIdx) {
+            currentActiveSection = slotIdx;
+            currentActiveCategory = 'ultimate';
+            openModal(slotIdx, 'ultimate');
+        }
+
+        function addUltimateSlot() {
+            ultimateRotation.push({ character: null, time: '' });
+            renderUltimateRotation();
+        }
+
+        function resetUltimateRotation() {
+            ultimateRotation = Array(12).fill().map(() => ({ character: null, time: '' }));
+            renderUltimateRotation();
+        }
+    </script>
+
+    <script>
+    // ── Battle Stats — Claude Vision API (scale-independent, high accuracy) ──
+    let bstatDealt = null;   // current scores
+    let bstatPrev  = null;   // snapshot before last "Update Score"
+    let bstatUpdateMode = false; // true while waiting for new image after clicking Update
+
+    // ── Upload zone ──
+    const uploadZone = document.getElementById('battle-stats-upload-zone');
+    const fileInput  = document.getElementById('battle-stats-file');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', e => { e.stopPropagation(); uploadZone.classList.remove('dragover'); });
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation();
+        uploadZone.classList.remove('dragover');
+        const file = [...(e.dataTransfer.files||[])].find(f => f.type.startsWith('image/'));
+        if (file) processBStatImage(file);
+    });
+
+    // Catch drops anywhere on the panel
+    const bstatPanel = document.getElementById('battle-stats-panel');
+    bstatPanel.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+    bstatPanel.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation();
+        const file = [...(e.dataTransfer.files||[])].find(f => f.type.startsWith('image/'));
+        if (file) processBStatImage(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) processBStatImage(fileInput.files[0]);
+        fileInput.value = '';
+    });
+
+    // Paste button hover
+    const pasteBtn = document.getElementById('battle-stats-paste-btn');
+    pasteBtn.addEventListener('mouseenter', () => { pasteBtn.style.borderColor='#4b6bfb'; pasteBtn.style.background='#1e2240'; });
+    pasteBtn.addEventListener('mouseleave', () => { pasteBtn.style.borderColor='#2d3142'; pasteBtn.style.background='#20222f'; });
+
+    // Clipboard paste button
+    async function pasteFromClipboard() {
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const t = item.types.find(t => t.startsWith('image/'));
+                if (t) { processBStatImage(new File([await item.getType(t)], 'clipboard.png', {type:t})); return; }
+            }
+            setStatus('No image in clipboard — try Ctrl+V');
+        } catch { setStatus('Press Ctrl+V anywhere on the page to paste'); }
+    }
+
+    // Global Ctrl+V fallback
+    document.addEventListener('paste', e => {
+        const img = [...(e.clipboardData?.items||[])].find(i => i.type.startsWith('image/'));
+        if (img) { e.preventDefault(); processBStatImage(img.getAsFile()); }
+    });
+
+    // ── "Update Score" — snapshot current data then show upload UI ──
+    function beginUpdateScore() {
+        if (!bstatDealt) return;
+        bstatUpdateMode = true;
+        // Show the upload row again without clearing current display
+        const uploadRow = document.getElementById('bstat-upload-row');
+        if (uploadRow) uploadRow.classList.remove('hidden');
+        setStatus('Upload/paste new screenshot to update…');
+        document.getElementById('battle-stats-update').classList.add('hidden');
+    }
+
+    // ── Main processing pipeline — Tesseract.js, number-column crop, gentle preprocessing ──
+    async function processBStatImage(file) {
+        setStatus('Reading image…');
+        try {
+            const bitmap = await createImageBitmap(file);
+            const W = bitmap.width, H = bitmap.height;
+
+            // ── Step 1: Run TWO passes on different crops to maximise accuracy ──
+            // Pass A — left ~55% of image: captures the large damage numbers (left-aligned)
+            // Pass B — right ~45% of image: captures the percentage column (right-aligned)
+            // Each crop is upscaled to at least 1200px wide for Tesseract accuracy.
+
+            async function ocrStrip(sx, sw) {
+                const TARGET = 1400;
+                const scale  = Math.max(1, TARGET / sw);
+                const c = document.createElement('canvas');
+                c.width  = Math.round(sw * scale);
+                c.height = Math.round(H  * scale);
+                const cx = c.getContext('2d');
+
+                // Draw the cropped region scaled up
+                cx.drawImage(bitmap, sx, 0, sw, H, 0, 0, c.width, c.height);
+
+                // Gentle greyscale + mild contrast boost — preserve digit shapes
+                // Do NOT over-crush: threshold at 50, multiply by 1.6 only
+                const id = cx.getImageData(0, 0, c.width, c.height);
+                const d  = id.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+                    const b = Math.min(255, Math.max(0, (g - 50) * 1.6));
+                    d[i] = d[i+1] = d[i+2] = b;
+                }
+                cx.putImageData(id, 0, 0);
+
+                // PSM 6 = uniform block; whitelist digits, comma, dot, percent
+                const r = await Tesseract.recognize(c, 'eng', {
+                    tessedit_char_whitelist: '0123456789,.',
+                    tessedit_pageseg_mode: '6',
+                });
+                return r.data.text;
+            }
+
+            const leftW  = Math.round(W * 0.62);
+            const rightX = Math.round(W * 0.55);
+            const rightW = W - rightX;
+
+            setStatus('Running OCR…');
+            const [leftText, rightText] = await Promise.all([
+                ocrStrip(0,     leftW),
+                ocrStrip(rightX, rightW),
+            ]);
+
+            console.log('[BStats LEFT]',  leftText);
+            console.log('[BStats RIGHT]', rightText);
+
+            // ── Step 2: Extract large damage numbers from the LEFT strip ──
+            // Match comma-formatted numbers like 306,844,899 OR plain ≥4-digit runs
+            // We keep them in top-to-bottom order (order of appearance in OCR output).
+            function extractNums(text) {
+                const out  = [];
+                // Match sequences of digits+commas that represent numbers (greedy, at least 4 chars)
+                const re   = /\d[\d,]{3,}/g;
+                let m;
+                while ((m = re.exec(text)) !== null) {
+                    // Normalise: strip commas, parse
+                    const raw = m[0].replace(/,/g, '');
+                    // Reject if more than 12 digits (OCR garbage) or less than 4
+                    if (raw.length < 4 || raw.length > 12) continue;
+                    const val = parseInt(raw, 10);
+                    if (val >= 1000) out.push(val);
+                }
+                return out;
+            }
+
+            // ── Step 3: Extract percentages from the RIGHT strip ──
+            function extractPcts(text) {
+                const out = [];
+                // Match  xx.xx  or  x.xx  (the % sign is often missed; we grab any decimal)
+                const re  = /\b(\d{1,3})\.(\d{1,2})\b/g;
+                let m;
+                while ((m = re.exec(text)) !== null) {
+                    const v = parseFloat(m[1] + '.' + m[2]);
+                    // Percentages must be between 0.01 and 100
+                    if (v >= 0.01 && v <= 100) out.push(v);
+                }
+                return out;
+            }
+
+            let allNums = extractNums(leftText);
+            let allPcts = extractPcts(rightText);
+
+            console.log('[BStats] nums:', allNums, 'pcts:', allPcts);
+
+            // Deduplicate preserving first-occurrence order
+            const seenN = new Set();
+            allNums = allNums.filter(v => { if (seenN.has(v)) return false; seenN.add(v); return true; });
+            const seenP = new Set();
+            allPcts = allPcts.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
+
+            if (allNums.length === 0) {
+                setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
+                return;
+            }
+
+            // ── Step 4: Build 5 rows in screenshot (top-to-bottom) order ──
+            const count     = Math.min(5, allNums.length);
+            const sliceNums = allNums.slice(0, count);
+            const total     = sliceNums.reduce((s, v) => s + v, 0);
+
+            // Use OCR percentages if we got exactly the right count and they sum near 100;
+            // otherwise recalculate from the raw numbers (more reliable).
+            const slicePcts = allPcts.slice(0, count);
+            const pctSum    = slicePcts.reduce((s, v) => s + v, 0);
+            const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
+
+            const rows = Array.from({ length: 5 }, (_, i) => {
+                const value = sliceNums[i] ?? 0;
+                const pct   = i < count
+                    ? (usePcts ? slicePcts[i] : (total > 0 ? value / total * 100 : 0))
+                    : 0;
+                return { slot: i + 1, value, pct };
+            });
+
+            if (bstatUpdateMode && bstatDealt) {
+                // Snapshot the current scores as "previous" before overwriting
+                bstatPrev = bstatDealt.map(r => ({ ...r }));
+                // Replace bars with the new scanned values (delta shown vs previous)
+                bstatDealt = rows;
+                bstatUpdateMode = false;
+            } else {
+                // Fresh load — no previous data
+                bstatPrev  = null;
+                bstatDealt = rows;
+            }
+
+            renderBStatBars();
+            setStatus('Done ✓');
+            setTimeout(() => setStatus(''), 3000);
+            document.getElementById('battle-stats-clear').classList.remove('hidden');
+            document.getElementById('battle-stats-update').classList.remove('hidden');
+
+        } catch(err) {
+            setStatus('Error: ' + err.message);
+            console.error('[Battle Stats]', err);
+        }
+    }
+
+    // ── Render bar chart ──
+    function renderBStatBars() {
+        const rows     = bstatDealt;
+        const barsEl   = document.getElementById('battle-stats-bars');
+        const totalEl  = document.getElementById('battle-stats-total');
+        const totalVal = document.getElementById('battle-stats-total-val');
+        const uploadRow = document.getElementById('bstat-upload-row');
+
+        if (!rows || rows.length === 0) {
+            barsEl.innerHTML = '<div style="text-align:center;font-size:11px;color:#475569;font-style:italic;margin-top:8px;">No data yet</div>';
+            totalEl.classList.add('hidden');
+            if (uploadRow) uploadRow.classList.remove('hidden');
+            return;
+        }
+
+        // Hide upload/paste buttons when data is loaded
+        if (uploadRow) uploadRow.classList.add('hidden');
+        const updateBtn = document.getElementById('battle-stats-update');
+        if (updateBtn && !bstatUpdateMode) updateBtn.classList.remove('hidden');
+
+        const maxVal = Math.max(...rows.map(r => r.value));
+        const total  = rows.reduce((s, r) => s + r.value, 0);
+
+        barsEl.innerHTML = rows.map((r, i) => {
+            const barPct  = maxVal > 0 ? (r.value / maxVal * 100).toFixed(1) : 0;
+            const isTop   = r.value === maxVal && r.value > 0;
+            const fill    = isTop ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#4b6bfb,#7c9dff)';
+
+            // Slot mapping: screenshot top bar = slot 5 (index 4), bottom bar = slot 1 (index 0)
+            const slotIdx  = 4 - i;
+            const slotChar = (typeof slotData !== 'undefined' && slotData[slotIdx]) ? slotData[slotIdx].character : null;
+            let iconHtml = '';
+            if (slotChar) {
+                const charEntry = (typeof db !== 'undefined' && db.characters) ? db.characters.find(c => c.name === slotChar) : null;
+                if (charEntry && charEntry.img) {
+                    iconHtml = `<img src="${charEntry.img}" class="dmg-char-icon" alt="${slotChar}" title="Slot ${slotIdx+1}: ${slotChar}" onerror="this.outerHTML='<div class=\\'dmg-char-placeholder\\'>${slotIdx+1}</div>'">`;
+                } else {
+                    iconHtml = `<div class="dmg-char-placeholder" title="${slotChar}">${slotIdx+1}</div>`;
+                }
+            } else {
+                iconHtml = `<div class="dmg-char-placeholder">${slotIdx+1}</div>`;
+            }
+
+            // Delta vs previous score (only shown after an Update Score)
+            let deltaHtml = '';
+            if (bstatPrev && bstatPrev[i] && r.value > 0) {
+                const diff = r.value - bstatPrev[i].value;
+                if (diff > 0) {
+                    deltaHtml = `<span style="font-size:9px;color:#34d399;font-weight:700;white-space:nowrap;">
+                        <i class="fa-solid fa-arrow-up" style="font-size:8px;"></i> +${diff.toLocaleString()}
+                    </span>`;
+                } else if (diff < 0) {
+                    deltaHtml = `<span style="font-size:9px;color:#f87171;font-weight:700;white-space:nowrap;">
+                        <i class="fa-solid fa-arrow-down" style="font-size:8px;"></i> ${diff.toLocaleString()}
+                    </span>`;
+                }
+            }
+
+            return `<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:6px;">
+                <div style="display:flex;align-items:flex-end;gap:8px;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
+                        ${iconHtml}
+                    </div>
+                    <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;align-self:stretch;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="flex:1;height:12px;background:#20222f;border-radius:6px;overflow:hidden;">
+                                <div style="width:${barPct}%;height:100%;background:${fill};border-radius:6px;transition:width 0.7s cubic-bezier(.22,.68,0,1.2);"></div>
+                            </div>
+                            <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${r.pct.toFixed(1)}%</span>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value > 0 ? r.value.toLocaleString() : '—'}</span>
+                            ${deltaHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        totalVal.textContent = total.toLocaleString();
+        totalEl.classList.remove('hidden');
+    }
+
+    function clearBattleStats() {
+        bstatDealt      = null;
+        bstatPrev       = null;
+        bstatUpdateMode = false;
+        renderBStatBars();
+        setStatus('');
+        document.getElementById('battle-stats-total').classList.add('hidden');
+        document.getElementById('battle-stats-clear').classList.add('hidden');
+        document.getElementById('battle-stats-update').classList.add('hidden');
+        const uploadRow = document.getElementById('bstat-upload-row');
+        if (uploadRow) uploadRow.classList.remove('hidden');
+    }
+
+    function setStatus(msg) {
+        document.getElementById('battle-stats-status').textContent = msg;
+    }
+    </script>
+
+    <script>
+        // ── Preset System ────────────────────────────────────────────────────
+        let _presetsDir = null;
+
+        async function initPresetsFolder() {
+            if (!window.showDirectoryPicker) {
+                alert('Your browser does not support the File System Access API.\nPlease use Chrome or Edge.');
+                return;
+            }
+            try {
+                const root = await window.showDirectoryPicker({ mode: 'readwrite' });
+                _presetsDir = await root.getDirectoryHandle('presets', { create: true });
+                document.getElementById('folder-banner')?.remove();
+                await scanPresets();
+            } catch (e) {
+                if (e.name !== 'AbortError') console.warn('Folder access error:', e);
+            }
+        }
+
+        async function scanPresets() {
+            const list = document.getElementById('preset-list');
+            if (!list) return;
+            if (!_presetsDir) {
+                list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Grant folder access to see presets</div>';
+                return;
+            }
+            const files = [];
+            for await (const [name] of _presetsDir.entries()) {
+                if (name.endsWith('.json')) files.push(name);
+            }
+            files.sort((a, b) => a.localeCompare(b));
+            if (files.length === 0) {
+                list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">No presets found</div>';
+                return;
+            }
+            list.innerHTML = '';
+            files.forEach(name => {
+                const label = name.replace(/\.json$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const row = document.createElement('button');
+                row.className = 'w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-[#21243a] hover:text-white transition-all flex items-center gap-2 group';
+                row.innerHTML = '<i class="fa-solid fa-file-code text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors"></i><span class="truncate">' + label + '</span>';
+                row.onclick = () => loadPresetByName(name);
+                list.appendChild(row);
+            });
+        }
+
+        async function savePreset() {
+            if (!_presetsDir) {
+                alert('No folder access yet. Click "Select Folder" in the banner at the bottom of the page first.');
+                return;
+            }
+            const title = document.querySelector('h1[contenteditable]')?.innerText?.trim() || 'My Lost Sword Team';
+            const safeName = title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').toLowerCase() || 'preset';
+            const filename = safeName + '.json';
+
+            let exists = false;
+            try { await _presetsDir.getFileHandle(filename); exists = true; } catch (_) {}
+            if (exists && !confirm('"' + filename + '" already exists.\nOverwrite it?')) return;
+
+            const fh = await _presetsDir.getFileHandle(filename, { create: true });
+            const writable = await fh.createWritable();
+            await writable.write(JSON.stringify({ version: 1, title, slotData, petsData, formationSlots, ultimateRotation, bstatDealt: (typeof bstatDealt !== 'undefined' ? bstatDealt : null), bstatPrev: (typeof bstatPrev !== 'undefined' ? bstatPrev : null) }, null, 2));
+            await writable.close();
+            await scanPresets();
+
+            const btn = document.querySelector('[onclick="savePreset()"]');
+            if (btn) {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Saved!';
+                btn.classList.replace('text-blue-400', 'text-green-400');
+                btn.classList.replace('border-blue-700', 'border-green-700');
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.classList.replace('text-green-400', 'text-blue-400');
+                    btn.classList.replace('border-green-700', 'border-blue-700');
+                }, 1800);
+            }
+        }
+
+        async function loadPresetByName(filename) {
+            if (!_presetsDir) return;
+            try {
+                const fh = await _presetsDir.getFileHandle(filename);
+                const text = await (await fh.getFile()).text();
+                const preset = JSON.parse(text);
+                if (!preset.slotData || !preset.petsData || !preset.formationSlots) {
+                    alert('Invalid preset file.'); return;
+                }
+                slotData = preset.slotData;
+                petsData = preset.petsData;
+                formationSlots = preset.formationSlots;
+                ultimateRotation = preset.ultimateRotation || Array(12).fill().map(() => ({ character: null, time: '' }));
+                const titleEl = document.querySelector('h1[contenteditable]');
+                if (titleEl && preset.title) titleEl.innerText = preset.title;
+
+                // Restore damage dealt data if present
+                if (typeof bstatDealt !== 'undefined') {
+                    bstatDealt = preset.bstatDealt || null;
+                    bstatPrev  = preset.bstatPrev  || null;
+                }
+                renderTeamGrid();
+                setupFormationDragDrop();
+                renderUltimateRotation();
+                // Re-render bars (will show data or reset to empty state)
+                if (typeof renderBStatBars === 'function') {
+                    renderBStatBars();
+                    const clearBtn  = document.getElementById('battle-stats-clear');
+                    const updateBtn = document.getElementById('battle-stats-update');
+                    if (bstatDealt && bstatDealt.length) {
+                        if (clearBtn)  clearBtn.classList.remove('hidden');
+                        if (updateBtn) updateBtn.classList.remove('hidden');
+                    } else {
+                        if (clearBtn)  clearBtn.classList.add('hidden');
+                        if (updateBtn) updateBtn.classList.add('hidden');
+                    }
+                }
+                document.getElementById('preset-dropdown').classList.add('hidden');
+            } catch (e) {
+                alert('Failed to load preset: ' + e.message);
+            }
+        }
+
+        function togglePresetDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('preset-dropdown').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const dd = document.getElementById('preset-dropdown');
+            if (!dd || dd.classList.contains('hidden')) return;
+            if (!dd.contains(e.target)) dd.classList.add('hidden');
+        });
+    </script>
+
+    <script>
+        // ── Zoom Lock ────────────────────────────────────────────────────────
+        // Allows zooming OUT freely, but prevents zooming IN past the base (100%).
+        (function() {
+            const wrapper = document.getElementById('zoom-lock');
+            if (!wrapper) return;
+
+            // Capture the "base" zoom at page load — this is the reference point.
+            // outerWidth/innerWidth gives browser zoom independent of OS scaling.
+            const baseZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
+
+            function applyZoomLock() {
+                const browserZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
+
+                // How much has the user zoomed relative to base?
+                const relativeZoom = browserZoom / baseZoom;
+
+                // Only counter zoom-IN (relativeZoom > 1). Allow zoom-OUT freely.
+                // If relativeZoom <= 1 the user has zoomed out — do nothing (scale = 1).
+                const scale = relativeZoom > 1 ? 1 / relativeZoom : 1;
+
+                wrapper.style.transform = scale < 1 ? `scale(${scale})` : '';
+                wrapper.style.transformOrigin = 'top left';
+
+                // When countering zoom-in, expand logical width to prevent clipping
+                if (scale < 1) {
+                    wrapper.style.width     = `${window.innerWidth  * relativeZoom}px`;
+                    wrapper.style.minHeight = `${window.innerHeight * relativeZoom}px`;
+                } else {
+                    wrapper.style.width     = '';
+                    wrapper.style.minHeight = '';
+                }
+            }
+
+            applyZoomLock();
+            window.addEventListener('resize', applyZoomLock);
+
+            // Intercept Ctrl+Wheel — only block zoom-IN, let zoom-OUT through
+            window.addEventListener('wheel', function(e) {
+                if (!e.ctrlKey) return;
+                const browserZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
+                const relativeZoom = browserZoom / baseZoom;
+                // e.deltaY < 0 = zooming in; block only if already at/above base
+                if (e.deltaY < 0 && relativeZoom >= 1) {
+                    e.preventDefault();
+                } else {
+                    setTimeout(applyZoomLock, 50);
+                }
+            }, { passive: false });
+
+            // Intercept Ctrl+Plus — block zoom-in, allow zoom-out (Ctrl+Minus) and reset (Ctrl+0)
+            window.addEventListener('keydown', function(e) {
+                if (!e.ctrlKey) return;
+                const browserZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
+                const relativeZoom = browserZoom / baseZoom;
+                if ((e.key === '+' || e.key === '=') && relativeZoom >= 1) {
+                    e.preventDefault(); // Block zoom-in at base level
+                } else if (e.key === '-' || e.key === '0') {
+                    setTimeout(applyZoomLock, 100); // Allow zoom-out / reset
+                }
+            });
+        })();
+    </script>
+
+</div><!-- /zoom-lock -->
+</body>
+</html>
