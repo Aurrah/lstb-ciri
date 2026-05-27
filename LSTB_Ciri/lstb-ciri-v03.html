@@ -142,10 +142,12 @@
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+            position: relative;
+            padding-top: 4px;
         }
         .ult-char-icon {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             border-radius: 0.5rem;
             background: #20222f;
             border: 2px solid #2d3142;
@@ -177,17 +179,13 @@
             justify-content: center;
         }
         .ult-char-icon.empty::before {
-            content: '+';
-            font-size: 28px;
-            color: #475569;
-            font-weight: 700;
-            line-height: 1;
+            content: none;
         }
         .ult-char-icon.empty:hover::before {
-            color: #64748b;
+            content: none;
         }
         .ult-time-input {
-            width: 60px;
+            width: 80px;
             padding: 4px 6px;
             background: #1a1c26;
             border: 1px solid #2d3142;
@@ -204,6 +202,61 @@
             outline: none;
             border-color: #4b6bfb;
             background: #21243a;
+        }
+
+        /* ── ULT time slot toggle ── */
+        .ult-time-wrapper {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
+            margin-top: 0;
+        }
+        .ult-time-wrapper.visible {
+            max-height: 40px;
+            opacity: 1;
+            margin-top: 0;
+        }
+
+        /* ── ULT add-time button (top-right of icon, relative to slotDiv) ── */
+        .ult-add-time-btn {
+            position: absolute;
+            top: -2px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #20222f;
+            border: 1.5px solid #2d3142;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+            z-index: 5;
+            pointer-events: none;
+            padding: 0;
+            font-size: 0;
+            line-height: 0;
+        }
+        /* Show button on slot hover or when slot has time visible */
+        .ult-rotation-slot:hover .ult-add-time-btn,
+        .ult-rotation-slot.has-time .ult-add-time-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .ult-add-time-btn:hover {
+            border-color: #4b6bfb;
+            color: #e2e8f0;
+            background: #1e2240;
+        }
+        /* When time is visible, tint blue */
+        .ult-rotation-slot.has-time .ult-add-time-btn {
+            border-color: #4b6bfb55;
+            color: #4b6bfb;
+            background: #1a1c26;
         }
         .ult-arrow {
             margin-top: 12px;
@@ -392,18 +445,18 @@
                                         </div>
                                     </div>
                                     <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
-                                    <div class="grid grid-cols-2 gap-[14px]">
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
-                                            <span id="gem-p1-0" class="text-[6px] text-slate-600">+</span>
+                                    <div class="grid grid-cols-2 gap-[6px]">
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
+                                            <span id="gem-p1-0" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_1', 'gem')">
-                                            <span id="gem-p1-1" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_1', 'gem')">
+                                            <span id="gem-p1-1" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_2', 'gem')">
-                                            <span id="gem-p1-2" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_2', 'gem')">
+                                            <span id="gem-p1-2" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_3', 'gem')">
-                                            <span id="gem-p1-3" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_3', 'gem')">
+                                            <span id="gem-p1-3" class="text-[8px] text-slate-600">+</span>
                                         </div>
                                     </div>
                                 </div>
@@ -421,18 +474,18 @@
                                         </div>
                                     </div>
                                     <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
-                                    <div class="grid grid-cols-2 gap-[14px]">
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
-                                            <span id="gem-p2-0" class="text-[6px] text-slate-600">+</span>
+                                    <div class="grid grid-cols-2 gap-[6px]">
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
+                                            <span id="gem-p2-0" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_1', 'gem')">
-                                            <span id="gem-p2-1" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_1', 'gem')">
+                                            <span id="gem-p2-1" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_2', 'gem')">
-                                            <span id="gem-p2-2" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_2', 'gem')">
+                                            <span id="gem-p2-2" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_3', 'gem')">
-                                            <span id="gem-p2-3" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_3', 'gem')">
+                                            <span id="gem-p2-3" class="text-[8px] text-slate-600">+</span>
                                         </div>
                                     </div>
                                 </div>
@@ -450,18 +503,18 @@
                                         </div>
                                     </div>
                                     <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
-                                    <div class="grid grid-cols-2 gap-[14px]">
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
-                                            <span id="gem-p3-0" class="text-[6px] text-slate-600">+</span>
+                                    <div class="grid grid-cols-2 gap-[6px]">
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
+                                            <span id="gem-p3-0" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_1', 'gem')">
-                                            <span id="gem-p3-1" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_1', 'gem')">
+                                            <span id="gem-p3-1" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_2', 'gem')">
-                                            <span id="gem-p3-2" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_2', 'gem')">
+                                            <span id="gem-p3-2" class="text-[8px] text-slate-600">+</span>
                                         </div>
-                                        <div class="w-8 h-8 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_3', 'gem')">
-                                            <span id="gem-p3-3" class="text-[6px] text-slate-600">+</span>
+                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_3', 'gem')">
+                                            <span id="gem-p3-3" class="text-[8px] text-slate-600">+</span>
                                         </div>
                                     </div>
                                 </div>
@@ -522,7 +575,7 @@
                         <i class="fa-solid fa-redo mr-1"></i>Reset
                     </button>
                 </div>
-                <div id="ultimate-rotation-container" class="flex items-start gap-2 pb-2 overflow-x-auto">
+                <div id="ultimate-rotation-container" class="flex items-start gap-2 pb-2 overflow-x-auto" style="padding-top: 4px;">
                     <!-- Rotation slots will be generated here -->
                 </div>
             </div>
@@ -553,18 +606,77 @@
         </div>
     </footer>
 
-    <!-- Folder access banner - shown on load until user grants access -->
-    <div id="folder-banner" class="fixed bottom-0 left-0 right-0 z-[90] bg-[#1a1e2e] border-t border-blue-800 px-6 py-3 flex items-center justify-between gap-4 shadow-2xl">
-        <div class="flex items-center gap-3">
-            <i class="fa-solid fa-folder-open text-blue-400 text-lg"></i>
-            <div>
-                <div class="text-sm font-semibold text-slate-200">Grant Folder Access</div>
-                <div class="text-xs text-slate-400">Select your <span class="text-blue-400 font-mono">LSTB_Ciri</span> folder to enable preset saving and loading.</div>
+    <!-- ── Damage Timeline Graph ───────────────────────────────────────── -->
+    <div id="dmg-timeline-section" class="max-w-7xl mx-auto w-full mt-0 mb-4 bg-cardBg border border-borderCool rounded-xl p-5 shadow-xl flex flex-col gap-3">
+
+        <!-- Header row -->
+        <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-area text-[#4b6bfb]"></i>
+                <span class="text-[12px] text-slate-400 font-semibold tracking-widest uppercase">Damage History</span>
+                <span id="dtg-folder-label" class="text-[12px] text-blue-400 font-semibold tracking-widest uppercase ml-1"></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="dtg-count-label" class="text-[10px] text-slate-500"></span>
+                <!-- Refresh button — visible after a folder is selected -->
+                <button id="dtg-refresh-btn" onclick="dtgLoad()" title="Reload current folder" class="hidden bg-[#1c1e29] border border-slate-700 hover:bg-slate-700/40 text-slate-400 text-xs font-semibold py-2 px-3 rounded-lg transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                </button>
+                <!-- Select Folder dropdown — mirrors Load Preset -->
+                <div class="relative">
+                    <button class="bg-[#1a1e2e] border border-blue-700 hover:bg-blue-900/40 text-blue-400 text-xs font-semibold py-2 px-4 rounded-lg transition-all flex items-center gap-2" onclick="toggleDtgDropdown(event)">
+                        <i class="fa-solid fa-folder-open"></i>Select Folder<i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <div id="dtg-dropdown" class="hidden absolute bottom-full right-0 mb-2 w-64 bg-[#181a24] border border-[#2d3142] rounded-xl shadow-2xl z-50 overflow-hidden">
+                        <div class="px-3 py-2 border-b border-[#2d3142] flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400 font-semibold tracking-widest uppercase">Preset Folders</span>
+                            <button onclick="dtgScanFolders()" class="text-slate-500 hover:text-slate-300 transition text-xs" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        </div>
+                        <div id="dtg-folder-list" class="max-h-64 overflow-y-auto py-1">
+                            <div class="px-3 py-3 text-xs text-slate-500 text-center italic">Grant folder access first</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="flex gap-2 flex-shrink-0">
-            <button onclick="initPresetsFolder()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-all"><i class="fa-solid fa-folder-open mr-2"></i>Select Folder</button>
-            <button onclick="document.getElementById('folder-banner').remove()" class="text-slate-500 hover:text-slate-300 text-xs px-2 transition-all" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Canvas wrapper — dark gradient bg matching the reference image -->
+        <div id="dtg-canvas-wrap" class="relative rounded-xl overflow-hidden" style="background:linear-gradient(160deg,#040d1e 0%,#071628 45%,#040e1c 100%);border:1px solid #0e2040;min-height:260px;">
+            <canvas id="dtg-canvas" width="1500" height="260" style="width:100%;display:block;"></canvas>
+            <!-- Placeholder shown before data is loaded -->
+            <div id="dtg-placeholder" class="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+                <i class="fa-solid fa-chart-area text-4xl" style="color:rgba(75,107,251,0.15)"></i>
+                <span class="text-xs text-slate-600 italic">Select a preset folder to view damage history</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subfolder Picker Modal -->
+    <div id="subfolder-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/75 backdrop-blur-sm">
+        <div class="bg-[#181a24] border border-[#2d3142] rounded-2xl shadow-2xl w-[420px] max-h-[80vh] flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#2d3142] flex-shrink-0">
+                <div>
+                    <div class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-floppy-disk text-blue-400"></i> Save Preset</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Choose a folder to save into</div>
+                </div>
+                <button onclick="closeSubfolderModal()" class="text-slate-500 hover:text-white transition-colors text-lg leading-none w-7 h-7 flex items-center justify-center rounded hover:bg-white/10"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Filename preview -->
+            <div class="px-5 py-3 border-b border-[#2d3142] flex-shrink-0 bg-[#0f111a]/50">
+                <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-1.5">File will be saved as:</div>
+                <div id="subfolder-preview" class="text-[11px] text-blue-300 font-mono bg-[#0f111a] border border-[#2d3142] rounded-lg px-3 py-2 break-all leading-relaxed"></div>
+            </div>
+            <!-- Subfolder list -->
+            <div class="overflow-y-auto flex-1 py-2 px-2" id="subfolder-list">
+                <div class="px-3 py-3 text-xs text-slate-500 text-center italic">Scanning folders...</div>
+            </div>
+            <!-- Root save option -->
+            <div class="px-4 py-3 border-t border-[#2d3142] flex-shrink-0">
+                <button onclick="confirmSaveToFolder(null)" class="w-full bg-[#1a1e2e] hover:bg-[#21243a] border border-[#3a3f5a] hover:border-blue-700 text-slate-400 hover:text-blue-300 text-xs font-semibold py-2.5 px-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-folder text-slate-500"></i> Save directly to /presets (no subfolder)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -825,9 +937,9 @@
             const gemEl = document.getElementById(`gem-p${petIdx + 1}-${gemIdx}`);
             if (gemEl) {
                 if (gemName) {
-                    gemEl.innerHTML = `<img src="gems/${gemName}.webp" class="w-6 h-6 object-contain" alt="${gemName}">`;
+                    gemEl.innerHTML = `<img src="gems/${gemName}.webp" class="w-7 h-7 object-contain" alt="${gemName}">`;
                 } else {
-                    gemEl.innerHTML = `<span class="text-[6px] text-slate-600">+</span>`;
+                    gemEl.innerHTML = `<span class="text-[8px] text-slate-600">+</span>`;
                 }
             }
         }
@@ -1912,22 +2024,60 @@
                     } else {
                         iconDiv.innerHTML = '<span style="font-size:10px;font-weight:700;color:#475569;">' + (slot.character.substring(0, 2).toUpperCase()) + '</span>';
                     }
+                } else {
+                    iconDiv.innerHTML = '<span class="text-xs text-slate-400">+</span>';
                 }
                 
-                slotDiv.appendChild(iconDiv);
-                
-                // Time input (hidden if x2 or auto)
+                // Time input wrapper — always in DOM, hidden by default
+                const timeWrapper = document.createElement('div');
                 if (slot.character !== 'x2' && slot.character !== 'auto') {
+                    const hasTime = slot.time && slot.time.trim() !== '';
+                    timeWrapper.className = 'ult-time-wrapper' + (hasTime ? ' visible' : '');
+                    if (hasTime) slotDiv.classList.add('has-time');
+
                     const timeInput = document.createElement('input');
                     timeInput.type = 'text';
                     timeInput.className = 'ult-time-input';
                     timeInput.placeholder = 'Time';
                     timeInput.value = slot.time;
-                    timeInput.onchange = (e) => {
+                    timeInput.addEventListener('change', (e) => {
                         ultimateRotation[idx].time = e.target.value;
-                    };
-                    slotDiv.appendChild(timeInput);
+                    });
+                    timeWrapper.appendChild(timeInput);
                 }
+
+                slotDiv.appendChild(iconDiv);
+
+                // Add-time toggle button — top-right of slotDiv, hover-only
+                if (slot.character !== 'x2' && slot.character !== 'auto') {
+                    const hasTime = slot.time && slot.time.trim() !== '';
+                    const addTimeBtn = document.createElement('button');
+                    addTimeBtn.className = 'ult-add-time-btn';
+                    addTimeBtn.title = hasTime ? 'Hide time slot' : 'Add time slot';
+                    addTimeBtn.innerHTML = hasTime
+                        ? '<span style="font-size:12px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">×</span>'
+                        : '<span style="font-size:14px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</span>';
+                    addTimeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const showing = timeWrapper.classList.contains('visible');
+                        if (showing) {
+                            timeWrapper.classList.remove('visible');
+                            slotDiv.classList.remove('has-time');
+                            addTimeBtn.innerHTML = '<span style="font-size:14px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">+</span>';
+                            addTimeBtn.title = 'Add time slot';
+                        } else {
+                            timeWrapper.classList.add('visible');
+                            slotDiv.classList.add('has-time');
+                            addTimeBtn.innerHTML = '<span style="font-size:12px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;">×</span>';
+                            addTimeBtn.title = 'Hide time slot';
+                            timeWrapper.querySelector('input').focus();
+                        }
+                    });
+                    slotDiv.appendChild(addTimeBtn);
+                }
+
+                slotDiv.appendChild(timeWrapper);
                 
                 container.appendChild(slotDiv);
                 
@@ -2292,6 +2442,7 @@
     <script>
         // ── Preset System ────────────────────────────────────────────────────
         let _presetsDir = null;
+        let _pendingSaveTitle = '';
 
         async function initPresetsFolder() {
             if (!window.showDirectoryPicker) {
@@ -2308,6 +2459,7 @@
             }
         }
 
+        // Scan presets dir + all subfolders for .json files, grouped by folder
         async function scanPresets() {
             const list = document.getElementById('preset-list');
             if (!list) return;
@@ -2315,24 +2467,85 @@
                 list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Grant folder access to see presets</div>';
                 return;
             }
-            const files = [];
-            for await (const [name] of _presetsDir.entries()) {
-                if (name.endsWith('.json')) files.push(name);
+
+            // Collect root files + subfolder files
+            const rootFiles = [];
+            const subfolders = {}; // { folderName: [filenames] }
+
+            for await (const [name, handle] of _presetsDir.entries()) {
+                if (handle.kind === 'file' && name.endsWith('.json')) {
+                    rootFiles.push(name);
+                } else if (handle.kind === 'directory') {
+                    subfolders[name] = [];
+                    for await (const [fname, fhandle] of handle.entries()) {
+                        if (fhandle.kind === 'file' && fname.endsWith('.json')) {
+                            subfolders[name].push(fname);
+                        }
+                    }
+                    subfolders[name].sort((a, b) => a.localeCompare(b));
+                }
             }
-            files.sort((a, b) => a.localeCompare(b));
-            if (files.length === 0) {
+            rootFiles.sort((a, b) => a.localeCompare(b));
+
+            const totalCount = rootFiles.length + Object.values(subfolders).reduce((s, a) => s + a.length, 0);
+            if (totalCount === 0) {
                 list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">No presets found</div>';
                 return;
             }
+
             list.innerHTML = '';
-            files.forEach(name => {
-                const label = name.replace(/\.json$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            // Helper to make a file row
+            function makeRow(displayName, onClick) {
                 const row = document.createElement('button');
                 row.className = 'w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-[#21243a] hover:text-white transition-all flex items-center gap-2 group';
-                row.innerHTML = '<i class="fa-solid fa-file-code text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors"></i><span class="truncate">' + label + '</span>';
-                row.onclick = () => loadPresetByName(name);
-                list.appendChild(row);
+                row.innerHTML = '<i class="fa-solid fa-file-code text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors"></i><span class="truncate">' + displayName + '</span>';
+                row.onclick = onClick;
+                return row;
+            }
+
+            // Root files
+            if (rootFiles.length > 0) {
+                rootFiles.forEach(name => {
+                    const label = name.replace(/\.json$/, '').replace(/_/g, ' ');
+                    list.appendChild(makeRow(label, () => loadPresetByName(name, null)));
+                });
+            }
+
+            // Subfolders
+            const folderNames = Object.keys(subfolders).sort();
+            folderNames.forEach(folder => {
+                const files = subfolders[folder];
+                // Folder header
+                const header = document.createElement('div');
+                header.className = 'px-3 pt-3 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 border-t border-[#2d3142] mt-1';
+                header.innerHTML = '<i class="fa-solid fa-folder text-slate-600"></i>' + folder;
+                list.appendChild(header);
+
+                if (files.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'px-4 py-1.5 text-[11px] text-slate-600 italic';
+                    empty.textContent = 'Empty folder';
+                    list.appendChild(empty);
+                } else {
+                    files.forEach(name => {
+                        const label = name.replace(/\.json$/, '').replace(/_/g, ' ');
+                        list.appendChild(makeRow(label, () => loadPresetByName(name, folder)));
+                    });
+                }
             });
+        }
+
+        // Build the auto-generated filename: SubfolderName_YYYY-MM-DD
+        function buildFilename(subfolderName) {
+            const date = new Date();
+            const dateStr = date.getFullYear() + '-'
+                + String(date.getMonth() + 1).padStart(2, '0') + '-'
+                + String(date.getDate()).padStart(2, '0');
+            if (subfolderName) {
+                return subfolderName + '_' + dateStr + '.json';
+            }
+            return dateStr + '.json';
         }
 
         async function savePreset() {
@@ -2340,20 +2553,80 @@
                 alert('No folder access yet. Click "Select Folder" in the banner at the bottom of the page first.');
                 return;
             }
-            const title = document.querySelector('h1[contenteditable]')?.innerText?.trim() || 'My Lost Sword Team';
-            const safeName = title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').toLowerCase() || 'preset';
-            const filename = safeName + '.json';
+            _pendingSaveTitle = document.querySelector('h1[contenteditable]')?.innerText?.trim() || 'My Lost Sword Team';
 
+            // Scan subfolders
+            const subfolderList = document.getElementById('subfolder-list');
+            subfolderList.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Scanning folders...</div>';
+
+            const folders = [];
+            for await (const [name, handle] of _presetsDir.entries()) {
+                if (handle.kind === 'directory') folders.push(name);
+            }
+            folders.sort((a, b) => a.localeCompare(b));
+
+            subfolderList.innerHTML = '';
+
+            if (folders.length === 0) {
+                subfolderList.innerHTML = '<div class="px-3 py-3 text-[11px] text-slate-500 text-center italic">No subfolders found in /presets.<br>Create subfolders in your file system to organise saves.</div>';
+            } else {
+                folders.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-[#21243a] hover:text-white transition-all flex items-center gap-3 group rounded-lg mx-0';
+                    btn.innerHTML = `<i class="fa-solid fa-folder text-yellow-500/70 group-hover:text-yellow-400 text-base flex-shrink-0 transition-colors"></i>
+                        <span class="flex-1 truncate font-medium">${name}</span>
+                        <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-slate-400 text-xs transition-colors"></i>`;
+                    btn.onclick = () => confirmSaveToFolder(name);
+                    subfolderList.appendChild(btn);
+                });
+            }
+
+            // Update preview with no folder selected yet
+            updateSavePreview(folders.length > 0 ? folders[0] : null);
+
+            // Show modal
+            document.getElementById('subfolder-modal').classList.remove('hidden');
+        }
+
+        function updateSavePreview(subfolderName) {
+            const filename = buildFilename(subfolderName);
+            const path = subfolderName ? `presets/${subfolderName}/${filename}` : `presets/${filename}`;
+            document.getElementById('subfolder-preview').textContent = path;
+        }
+
+        function closeSubfolderModal() {
+            document.getElementById('subfolder-modal').classList.add('hidden');
+        }
+
+        async function confirmSaveToFolder(subfolderName) {
+            closeSubfolderModal();
+            if (!_presetsDir) return;
+
+            const filename = buildFilename(subfolderName);
+            let targetDir = _presetsDir;
+
+            if (subfolderName) {
+                targetDir = await _presetsDir.getDirectoryHandle(subfolderName, { create: true });
+            }
+
+            // Check if file exists
             let exists = false;
-            try { await _presetsDir.getFileHandle(filename); exists = true; } catch (_) {}
-            if (exists && !confirm('"' + filename + '" already exists.\nOverwrite it?')) return;
+            try { await targetDir.getFileHandle(filename); exists = true; } catch (_) {}
+            if (exists && !confirm(`"${filename}" already exists.\nOverwrite it?`)) return;
 
-            const fh = await _presetsDir.getFileHandle(filename, { create: true });
+            const fh = await targetDir.getFileHandle(filename, { create: true });
             const writable = await fh.createWritable();
-            await writable.write(JSON.stringify({ version: 1, title, slotData, petsData, formationSlots, ultimateRotation, bstatDealt: (typeof bstatDealt !== 'undefined' ? bstatDealt : null), bstatPrev: (typeof bstatPrev !== 'undefined' ? bstatPrev : null) }, null, 2));
+            await writable.write(JSON.stringify({
+                version: 1,
+                title: _pendingSaveTitle,
+                slotData, petsData, formationSlots, ultimateRotation,
+                bstatDealt: (typeof bstatDealt !== 'undefined' ? bstatDealt : null),
+                bstatPrev:  (typeof bstatPrev  !== 'undefined' ? bstatPrev  : null)
+            }, null, 2));
             await writable.close();
             await scanPresets();
 
+            // Flash the save button green
             const btn = document.querySelector('[onclick="savePreset()"]');
             if (btn) {
                 const orig = btn.innerHTML;
@@ -2368,10 +2641,15 @@
             }
         }
 
-        async function loadPresetByName(filename) {
+        // Load accepts optional subfolder name; null = root presets dir
+        async function loadPresetByName(filename, subfolderName) {
             if (!_presetsDir) return;
             try {
-                const fh = await _presetsDir.getFileHandle(filename);
+                let targetDir = _presetsDir;
+                if (subfolderName) {
+                    targetDir = await _presetsDir.getDirectoryHandle(subfolderName);
+                }
+                const fh = await targetDir.getFileHandle(filename);
                 const text = await (await fh.getFile()).text();
                 const preset = JSON.parse(text);
                 if (!preset.slotData || !preset.petsData || !preset.formationSlots) {
@@ -2384,7 +2662,6 @@
                 const titleEl = document.querySelector('h1[contenteditable]');
                 if (titleEl && preset.title) titleEl.innerText = preset.title;
 
-                // Restore damage dealt data if present
                 if (typeof bstatDealt !== 'undefined') {
                     bstatDealt = preset.bstatDealt || null;
                     bstatPrev  = preset.bstatPrev  || null;
@@ -2392,7 +2669,6 @@
                 renderTeamGrid();
                 setupFormationDragDrop();
                 renderUltimateRotation();
-                // Re-render bars (will show data or reset to empty state)
                 if (typeof renderBStatBars === 'function') {
                     renderBStatBars();
                     const clearBtn  = document.getElementById('battle-stats-clear');
@@ -2416,11 +2692,355 @@
             document.getElementById('preset-dropdown').classList.toggle('hidden');
         }
 
+        // Close subfolder modal on backdrop click
+        document.getElementById('subfolder-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeSubfolderModal();
+        });
+
+        // Update filename preview when hovering folder buttons
+        document.getElementById('subfolder-list').addEventListener('mouseover', function(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const folderName = btn.querySelector('span')?.textContent?.trim();
+            if (folderName) updateSavePreview(folderName);
+        });
+
         document.addEventListener('click', (e) => {
             const dd = document.getElementById('preset-dropdown');
             if (!dd || dd.classList.contains('hidden')) return;
             if (!dd.contains(e.target)) dd.classList.add('hidden');
         });
+    </script>
+
+    <script>
+    // ── Damage Timeline Graph ─────────────────────────────────────────────────
+    (function () {
+        let _dtgSubfolderHandle = null; // the chosen subfolder handle
+        let _dtgSubfolderName   = '';
+
+        // ── Dropdown toggle ────────────────────────────────────────────────
+        window.toggleDtgDropdown = function (e) {
+            e.stopPropagation();
+            const dd = document.getElementById('dtg-dropdown');
+            const wasHidden = dd.classList.contains('hidden');
+            dd.classList.toggle('hidden');
+            if (wasHidden) dtgScanFolders();
+        };
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            const dd = document.getElementById('dtg-dropdown');
+            if (!dd || dd.classList.contains('hidden')) return;
+            if (!dd.closest('.relative').contains(e.target)) dd.classList.add('hidden');
+        });
+
+        // ── Scan _presetsDir for subfolders ────────────────────────────────
+        window.dtgScanFolders = async function () {
+            const list = document.getElementById('dtg-folder-list');
+            if (!list) return;
+
+            if (typeof _presetsDir === 'undefined' || !_presetsDir) {
+                list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Grant folder access first</div>';
+                return;
+            }
+
+            list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Scanning…</div>';
+
+            const folders = [];
+            try {
+                for await (const [name, handle] of _presetsDir.entries()) {
+                    if (handle.kind === 'directory') folders.push({ name, handle });
+                }
+            } catch (e) {
+                list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">Error reading folders</div>';
+                return;
+            }
+
+            folders.sort((a, b) => a.name.localeCompare(b.name));
+
+            if (folders.length === 0) {
+                list.innerHTML = '<div class="px-3 py-3 text-xs text-slate-500 text-center italic">No subfolders found</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            folders.forEach(({ name, handle }) => {
+                const row = document.createElement('button');
+                row.className = 'w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-[#21243a] hover:text-white transition-all flex items-center gap-2 group';
+                row.innerHTML = `<i class="fa-solid fa-folder text-yellow-500/70 group-hover:text-yellow-400 flex-shrink-0 transition-colors"></i><span class="truncate">${name}</span>`;
+                row.onclick = () => {
+                    _dtgSubfolderHandle = handle;
+                    _dtgSubfolderName   = name;
+                    document.getElementById('dtg-folder-label').textContent = '/ ' + name;
+                    document.getElementById('dtg-refresh-btn').classList.remove('hidden');
+                    document.getElementById('dtg-dropdown').classList.add('hidden');
+                    dtgLoad();
+                };
+                list.appendChild(row);
+            });
+        };
+
+        // ── Load & parse presets from selected subfolder ───────────────────
+        window.dtgLoad = async function () {
+            if (!_dtgSubfolderHandle) return;
+
+            const countLabel = document.getElementById('dtg-count-label');
+            countLabel.textContent = 'Loading…';
+
+            const entries = [];
+            try {
+                for await (const [name, handle] of _dtgSubfolderHandle.entries()) {
+                    if (handle.kind === 'file' && name.endsWith('.json')) {
+                        entries.push({ name, handle });
+                    }
+                }
+            } catch (e) {
+                countLabel.textContent = 'Error reading folder';
+                return;
+            }
+
+            entries.sort((a, b) => a.name.localeCompare(b.name));
+            const slice = entries.slice(-10);
+
+            const dataPoints = [];
+            for (const { name, handle } of slice) {
+                try {
+                    const text = await (await handle.getFile()).text();
+                    const preset = JSON.parse(text);
+                    const rows = preset.bstatDealt;
+                    if (!rows || !Array.isArray(rows)) continue;
+                    const total = rows.reduce((s, r) => s + (r.value || 0), 0);
+                    if (total <= 0) continue;
+                    const dm = name.match(/(\d{4}-\d{2}-\d{2})/);
+                    const dateStr = dm ? dm[1] : name.replace('.json', '');
+                    dataPoints.push({ date: dateStr, total, title: preset.title || name.replace('.json', '') });
+                } catch (_) {}
+            }
+
+            const n = dataPoints.length;
+            countLabel.textContent = n > 0
+                ? `${n} preset${n !== 1 ? 's' : ''} loaded`
+                : 'No damage data found';
+
+            dtgRender(dataPoints);
+        };
+
+        // ── Render ─────────────────────────────────────────────────────────
+        function dtgRender(pts) {
+            const canvas = document.getElementById('dtg-canvas');
+            const ph     = document.getElementById('dtg-placeholder');
+            const ctx    = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+
+            ctx.clearRect(0, 0, W, H);
+
+            if (!pts || pts.length === 0) {
+                ph.style.display = 'flex';
+                return;
+            }
+            ph.style.display = 'none';
+
+            // ── Layout constants ──
+            const padL = 95, padR = 30, padT = 38, padB = 30;
+            const cW = W - padL - padR;
+            const cH = H - padT - padB;
+
+            // ── Nice Y-axis max ──
+            const rawMax = Math.max(...pts.map(d => d.total));
+            const niceMax = niceUp(rawMax * 1.08);
+            const tickCount = 5;
+            const tickStep  = niceMax / tickCount;
+
+            // ── Coordinate helpers ──
+            // Column-based layout: each data point owns an equal slice of cW.
+            // Bars are centred in their column so they can never overflow the chart bounds.
+            const colW  = cW / pts.length;
+            const barW  = Math.min(Math.max(colW * 0.55, 8), 100);
+            const xPos  = i => padL + colW * (i + 0.5);
+            const yPos  = v => padT + cH - (v / niceMax) * cH;
+
+            // ── Subtle horizontal grid ──
+            for (let t = 0; t <= tickCount; t++) {
+                const y = padT + cH - (t / tickCount) * cH;
+                ctx.strokeStyle = t === 0
+                    ? 'rgba(0,200,220,0.12)'   // axis line slightly brighter
+                    : 'rgba(255,255,255,0.035)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash(t > 0 ? [4, 6] : []);
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + cW, y); ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // ── Vertical dotted guide lines ──
+            ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+            ctx.lineWidth = 1;
+            pts.forEach((_, i) => {
+                const x = xPos(i);
+                ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + cH); ctx.stroke();
+            });
+
+            // ── Bars ──────────────────────────────────────────────────────
+            pts.forEach((d, i) => {
+                const x  = xPos(i);
+                const bH = (d.total / niceMax) * cH;
+                const by = padT + cH - bH;
+                const bx = x - barW / 2;
+
+                // Teal gradient fill
+                const grd = ctx.createLinearGradient(x, by, x, padT + cH);
+                grd.addColorStop(0,   'rgba(0,230,230,0.88)');
+                grd.addColorStop(0.4, 'rgba(0,190,210,0.65)');
+                grd.addColorStop(0.8, 'rgba(0,130,170,0.35)');
+                grd.addColorStop(1,   'rgba(0, 80,130,0.10)');
+
+                // Glow
+                ctx.shadowColor = 'rgba(0,220,220,0.55)';
+                ctx.shadowBlur  = 16;
+                ctx.fillStyle   = grd;
+
+                // Rounded top corners
+                const r = Math.min(4, barW / 4);
+                ctx.beginPath();
+                ctx.moveTo(bx + r, by);
+                ctx.lineTo(bx + barW - r, by);
+                ctx.quadraticCurveTo(bx + barW, by, bx + barW, by + r);
+                ctx.lineTo(bx + barW, padT + cH);
+                ctx.lineTo(bx, padT + cH);
+                ctx.lineTo(bx, by + r);
+                ctx.quadraticCurveTo(bx, by, bx + r, by);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Top edge highlight
+                ctx.strokeStyle = 'rgba(0,240,240,0.55)';
+                ctx.lineWidth   = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(bx + r, by);
+                ctx.lineTo(bx + barW - r, by);
+                ctx.stroke();
+            });
+
+            // ── Line ──────────────────────────────────────────────────────
+            if (pts.length > 1) {
+                ctx.shadowColor = 'rgba(120,175,255,0.9)';
+                ctx.shadowBlur  = 10;
+                ctx.strokeStyle = 'rgba(140,185,255,0.75)';
+                ctx.lineWidth   = 2.5;
+                ctx.lineJoin    = 'round';
+                ctx.beginPath();
+                pts.forEach((d, i) => {
+                    const x = xPos(i), y = yPos(d.total);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            // ── Dots + value labels ───────────────────────────────────────
+            pts.forEach((d, i) => {
+                const x = xPos(i), y = yPos(d.total);
+                const isMax = d.total === rawMax;
+
+                // Outer halo
+                const haloGrd = ctx.createRadialGradient(x, y, 0, x, y, 12);
+                haloGrd.addColorStop(0,   isMax ? 'rgba(255,80,80,0.40)' : 'rgba(120,175,255,0.30)');
+                haloGrd.addColorStop(1,   'rgba(0,0,0,0)');
+                ctx.fillStyle = haloGrd;
+                ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+
+                // Dot
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle   = isMax ? '#ff6060' : '#90bdff';
+                ctx.shadowColor = isMax ? 'rgba(255,80,80,0.9)' : 'rgba(140,190,255,0.9)';
+                ctx.shadowBlur  = 10;
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth   = 1.5;
+                ctx.stroke();
+                ctx.shadowBlur  = 0;
+
+                // Value label above dot
+                const lbl = fmtNum(d.total);
+                ctx.font      = 'bold 13px system-ui,sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,1)';
+                ctx.shadowBlur  = 6;
+                ctx.fillStyle   = isMax ? '#ffb0b0' : '#e8f2ff';
+                ctx.fillText(lbl, x, y - 14);
+                ctx.shadowBlur  = 0;
+            });
+
+            // ── Y-axis labels ─────────────────────────────────────────────
+            ctx.textAlign = 'right';
+            ctx.font      = 'bold 12px system-ui,sans-serif';
+            for (let t = 0; t <= tickCount; t++) {
+                const val = t * tickStep;
+                const y   = padT + cH - (t / tickCount) * cH;
+                ctx.fillStyle   = '#c8d8f0';
+                ctx.shadowColor = 'rgba(0,0,0,0.95)';
+                ctx.shadowBlur  = 4;
+                ctx.fillText(fmtNum(val), padL - 8, y + 4);
+                ctx.shadowBlur  = 0;
+            }
+
+            // ── X-axis date labels ────────────────────────────────────────
+            ctx.textAlign = 'center';
+            pts.forEach((d, i) => {
+                const x = xPos(i);
+                const parts = d.date.split('-');
+                const md  = parts.length === 3 ? parts[1] + '/' + parts[2] : d.date;
+                const yr  = parts.length === 3 ? parts[0] : '';
+                ctx.shadowColor = 'rgba(0,0,0,0.95)';
+                ctx.shadowBlur  = 4;
+                ctx.fillStyle   = '#e2eeff';
+                ctx.font        = 'bold 13px system-ui,sans-serif';
+                ctx.fillText(md, x, padT + cH + 16);
+                if (yr) {
+                    ctx.fillStyle = '#7a90aa';
+                    ctx.font      = 'bold 11px system-ui,sans-serif';
+                    ctx.fillText(yr, x, padT + cH + 30);
+                }
+                ctx.shadowBlur = 0;
+            });
+
+            // ── Y-axis title (rotated) ────────────────────────────────────
+            ctx.save();
+            ctx.translate(13, padT + cH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle   = '#64748b';
+            ctx.font        = 'bold 10px system-ui,sans-serif';
+            ctx.textAlign   = 'center';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur  = 3;
+            ctx.fillText('DAMAGE DEALT', 0, 0);
+            ctx.shadowBlur  = 0;
+            ctx.restore();
+        }
+
+        // ── Helpers ────────────────────────────────────────────────────────
+        function fmtNum(n) {
+            if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+            return String(n);
+        }
+        function niceUp(v) {
+            if (v <= 0) return 1;
+            const mag  = Math.pow(10, Math.floor(Math.log10(v)));
+            const frac = v / mag;
+            let nice;
+            if      (frac <= 1)  nice = 1;
+            else if (frac <= 2)  nice = 2;
+            else if (frac <= 5)  nice = 5;
+            else                 nice = 10;
+            return nice * mag;
+        }
+
+        // Re-render if window resizes (canvas is CSS-scaled, no re-render needed
+        // unless you want pixel-perfect — skip for now to keep it simple)
+    })();
     </script>
 
     <script>
@@ -2430,31 +3050,23 @@
             const wrapper = document.getElementById('zoom-lock');
             if (!wrapper) return;
 
-            // Capture the "base" zoom at page load — this is the reference point.
-            // outerWidth/innerWidth gives browser zoom independent of OS scaling.
+            // Capture the "base" zoom at page load.
             const baseZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
+
+            // Default render scale — page starts at 90%
+            const DEFAULT_SCALE = 0.9;
 
             function applyZoomLock() {
                 const browserZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
-
-                // How much has the user zoomed relative to base?
                 const relativeZoom = browserZoom / baseZoom;
 
-                // Only counter zoom-IN (relativeZoom > 1). Allow zoom-OUT freely.
-                // If relativeZoom <= 1 the user has zoomed out — do nothing (scale = 1).
-                const scale = relativeZoom > 1 ? 1 / relativeZoom : 1;
+                // Apply default 90% scale, only counter zoom-IN past base (relativeZoom > 1)
+                const scale = relativeZoom > 1 ? DEFAULT_SCALE / relativeZoom : DEFAULT_SCALE;
 
-                wrapper.style.transform = scale < 1 ? `scale(${scale})` : '';
+                wrapper.style.transform = `scale(${scale})`;
                 wrapper.style.transformOrigin = 'top left';
-
-                // When countering zoom-in, expand logical width to prevent clipping
-                if (scale < 1) {
-                    wrapper.style.width     = `${window.innerWidth  * relativeZoom}px`;
-                    wrapper.style.minHeight = `${window.innerHeight * relativeZoom}px`;
-                } else {
-                    wrapper.style.width     = '';
-                    wrapper.style.minHeight = '';
-                }
+                wrapper.style.width     = `${window.innerWidth  / scale}px`;
+                wrapper.style.minHeight = `${window.innerHeight / scale}px`;
             }
 
             applyZoomLock();
@@ -2488,5 +3100,23 @@
     </script>
 
 </div><!-- /zoom-lock -->
+
+<!-- Folder access banner — lives OUTSIDE zoom-lock so position:fixed works correctly.
+     CSS transform on a parent breaks fixed positioning; elements become positioned
+     relative to the transformed ancestor instead of the viewport. -->
+<div id="folder-banner" class="fixed bottom-0 left-0 right-0 z-[90] bg-[#1a1e2e] border-t border-blue-800 px-6 py-3 flex items-center justify-between gap-4 shadow-2xl">
+    <div class="flex items-center gap-3">
+        <i class="fa-solid fa-folder-open text-blue-400 text-lg"></i>
+        <div>
+            <div class="text-sm font-semibold text-slate-200">Grant Folder Access</div>
+            <div class="text-xs text-slate-400">Select your <span class="text-blue-400 font-mono">LSTB_Ciri</span> folder to enable preset saving and loading.</div>
+        </div>
+    </div>
+    <div class="flex gap-2 flex-shrink-0">
+        <button onclick="initPresetsFolder()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-all"><i class="fa-solid fa-folder-open mr-2"></i>Select Folder</button>
+        <button onclick="document.getElementById('folder-banner').remove()" class="text-slate-500 hover:text-slate-300 text-xs px-2 transition-all" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+</div>
+
 </body>
 </html>
