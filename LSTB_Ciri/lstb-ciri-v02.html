@@ -943,7 +943,12 @@
                     const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'));
                     if (dragType === 'character') {
                         const to = parseInt(index);
+                        // Swap the character data
                         [slotData[dragIndex], slotData[to]] = [slotData[to], slotData[dragIndex]];
+                        // Reset formation to defaults so each slot index always maps
+                        // to its fixed default formation position, regardless of any
+                        // manual formation moves the user made beforehand.
+                        formationSlots = [1, 3, 4, 0, 2, -1];
                         renderTeamGrid();
                         if (typeof bstatDealt !== 'undefined' && bstatDealt) renderBStatBars();
                     }
@@ -1577,6 +1582,18 @@
                     <span class="text-[10px] font-bold text-slate-400 text-center leading-tight w-full truncate">Repeat</span>
                 `;
                 grid.appendChild(x2Box);
+
+                const autoBox = document.createElement('div');
+                autoBox.className = "item-card bg-[#1a1c28] border border-dashed border-slate-600 rounded-lg p-1.5 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-[#0c1a12] transition-all";
+                autoBox.style.cssText = 'aspect-ratio:3/4;';
+                autoBox.onclick = () => selectUltimateAuto();
+                autoBox.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center gap-1.5" style="min-height:60px">
+                        <span style="font-size:20px;font-weight:700;color:#4ade80;">Auto</span>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-400 text-center leading-tight w-full truncate">Auto</span>
+                `;
+                grid.appendChild(autoBox);
             }
 
             items.forEach(item => {
@@ -1720,6 +1737,14 @@
             closeModal();
         }
 
+        function selectUltimateAuto() {
+            if (typeof currentActiveSection !== 'number') return;
+            ultimateRotation[currentActiveSection].character = 'auto';
+            ultimateRotation[currentActiveSection].time = '';
+            renderUltimateRotation();
+            closeModal();
+        }
+
         function clearSlot() {
             if (currentActiveCategory === 'character') {
                 slotData[currentActiveSection].character = null;
@@ -1849,8 +1874,13 @@
             const container = document.getElementById('ultimate-rotation-container');
             if (!container) return;
             
-            // Find the x2 marker (repeat slot)
-            const repeatIdx = ultimateRotation.findIndex(slot => slot.character === 'x2');
+            // Find the x2 or auto marker (whichever comes first)
+            const x2Idx   = ultimateRotation.findIndex(slot => slot.character === 'x2');
+            const autoIdx = ultimateRotation.findIndex(slot => slot.character === 'auto');
+            const repeatIdx = x2Idx === -1 && autoIdx === -1 ? -1
+                            : x2Idx === -1 ? autoIdx
+                            : autoIdx === -1 ? x2Idx
+                            : Math.min(x2Idx, autoIdx);
             
             container.innerHTML = '';
             ultimateRotation.forEach((slot, idx) => {
@@ -1868,6 +1898,8 @@
                 
                 if (slot.character === 'x2') {
                     iconDiv.innerHTML = '<span style="font-size:14px;font-weight:700;color:#64748b;">x2</span>';
+                } else if (slot.character === 'auto') {
+                    iconDiv.innerHTML = '<span style="font-size:12px;font-weight:700;color:#4ade80;">Auto</span>';
                 } else if (slot.character) {
                     const charEntry = db.characters ? db.characters.find(c => c.name === slot.character) : null;
                     if (charEntry && charEntry.img) {
@@ -1883,8 +1915,8 @@
                 
                 slotDiv.appendChild(iconDiv);
                 
-                // Time input (hidden if x2)
-                if (slot.character !== 'x2') {
+                // Time input (hidden if x2 or auto)
+                if (slot.character !== 'x2' && slot.character !== 'auto') {
                     const timeInput = document.createElement('input');
                     timeInput.type = 'text';
                     timeInput.className = 'ult-time-input';
