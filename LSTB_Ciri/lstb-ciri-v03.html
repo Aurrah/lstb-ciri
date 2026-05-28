@@ -1593,17 +1593,20 @@
             applyPetFilters();
         }
 
-        function resetPetFilters() {
-            ['rarity','element'].forEach(cat => {
-                activePetFilters[cat].forEach(val => {
-                    const btn = document.getElementById(`pfbtn-${cat}-${val}`);
-                    btn && btn.classList.remove('active');
-                });
-                activePetFilters[cat].clear();
-                const allBtn = document.getElementById(`pfbtn-${cat}-all`);
-                allBtn && allBtn.classList.add('active');
-            });
-            document.getElementById('modal-search').value = '';
+        function togglePetFilter(cat, val) {
+            const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+            if (activePetFilters[cat].has(val)) {
+                activePetFilters[cat].delete(val);
+                btn && btn.classList.remove('active');
+                if (activePetFilters[cat].size === 0) {
+                    allBtn && allBtn.classList.add('active');
+                }
+            } else {
+                activePetFilters[cat].add(val);
+                btn && btn.classList.add('active');
+                allBtn && allBtn.classList.remove('active');
+            }
             applyPetFilters();
         }
 
@@ -1622,6 +1625,7 @@
             const countEl = document.getElementById('pet-showing-count');
             if (countEl) countEl.textContent = `Showing ${filtered.length} of ${pets.length} Pets`;
         }
+
         // ─────────────────────────────────────────────────────
 
         function openModal(slotIndex, type, gearCat = null) {
@@ -1637,12 +1641,11 @@
             document.getElementById('character-filters').classList.toggle('hidden', !isChar);
             document.getElementById('pet-filters').classList.toggle('hidden', !isPet);
             document.getElementById('gem-filters').classList.toggle('hidden', !isGem);
+            
             // Reset batch mode whenever the gem modal opens
             if (!isGem && gemBatchMode) toggleGemBatch();
             if (isChar) {
                 resetFilters();
-            } else if (isPet) {
-                resetPetFilters();
             } else if (type === 'gear') {
                 // For gear, filter by character class
                 const charName = slotData[slotIndex].character;
@@ -2283,14 +2286,17 @@
             console.log('[BStats RIGHT]', rightText);
 
             // ── Step 2: Extract large damage numbers from the LEFT strip ──
-            // Match comma-formatted numbers like 306,844,899 OR plain >=4-digit runs.
-            // Returns numbers >= 1000 only (zero-damage entries produce no text on screen).
+            // Match comma-formatted numbers like 306,844,899 OR plain ≥4-digit runs
+            // We keep them in top-to-bottom order (order of appearance in OCR output).
             function extractNums(text) {
                 const out  = [];
+                // Match sequences of digits+commas that represent numbers (greedy, at least 4 chars)
                 const re   = /\d[\d,]{3,}/g;
                 let m;
                 while ((m = re.exec(text)) !== null) {
+                    // Normalise: strip commas, parse
                     const raw = m[0].replace(/,/g, '');
+                    // Reject if more than 12 digits (OCR garbage) or less than 4
                     if (raw.length < 4 || raw.length > 12) continue;
                     const val = parseInt(raw, 10);
                     if (val >= 1000) out.push(val);
@@ -2299,15 +2305,15 @@
             }
 
             // ── Step 3: Extract percentages from the RIGHT strip ──
-            // Allow 0.00 so zero-damage rows can be detected by position.
             function extractPcts(text) {
                 const out = [];
+                // Match  xx.xx  or  x.xx  (the % sign is often missed; we grab any decimal)
                 const re  = /\b(\d{1,3})\.(\d{1,2})\b/g;
                 let m;
                 while ((m = re.exec(text)) !== null) {
                     const v = parseFloat(m[1] + '.' + m[2]);
-                    // Allow 0.00 explicitly; reject anything over 100
-                    if (v >= 0 && v <= 100) out.push(v);
+                    // Percentages must be between 0.01 and 100
+                    if (v >= 0.01 && v <= 100) out.push(v);
                 }
                 return out;
             }
@@ -2317,58 +2323,35 @@
 
             console.log('[BStats] nums:', allNums, 'pcts:', allPcts);
 
-            // Deduplicate nums preserving first-occurrence order
+            // Deduplicate preserving first-occurrence order
             const seenN = new Set();
             allNums = allNums.filter(v => { if (seenN.has(v)) return false; seenN.add(v); return true; });
-            // Do NOT deduplicate pcts — multiple rows can share the same value (e.g. two 0.00 entries)
+            const seenP = new Set();
+            allPcts = allPcts.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
 
-            if (allNums.length === 0 && allPcts.length === 0) {
+            if (allNums.length === 0) {
                 setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
                 return;
             }
 
             // ── Step 4: Build 5 rows in screenshot (top-to-bottom) order ──
-            // A character with 0 damage shows "0.00%" but no number in the left column.
-            // Use the pct array as the authoritative position guide: for each pct entry,
-            // if pct === 0 that row is a zero-damage slot; otherwise consume the next number.
-            const pctCount = Math.min(5, allPcts.length);
-            const numCount = Math.min(5, allNums.length);
-            const rowCount = Math.max(pctCount, numCount);
+            const count     = Math.min(5, allNums.length);
+            const sliceNums = allNums.slice(0, count);
+            const total     = sliceNums.reduce((s, v) => s + v, 0);
 
-            if (rowCount === 0) {
-                setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
-                return;
-            }
+            // Use OCR percentages if we got exactly the right count and they sum near 100;
+            // otherwise recalculate from the raw numbers (more reliable).
+            const slicePcts = allPcts.slice(0, count);
+            const pctSum    = slicePcts.reduce((s, v) => s + v, 0);
+            const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
 
-            let rows;
-            if (pctCount >= numCount && pctCount > 0) {
-                // Pcts give us enough info to place zeros in the right position
-                let numIdx = 0;
-                const builtRows = [];
-                for (let i = 0; i < pctCount; i++) {
-                    const pct = allPcts[i];
-                    let value;
-                    if (pct === 0) {
-                        value = 0;
-                    } else {
-                        value = allNums[numIdx] ?? 0;
-                        numIdx++;
-                    }
-                    builtRows.push({ slot: i + 1, value, pct });
-                }
-                // Pad to 5 if fewer than 5 rows were found
-                while (builtRows.length < 5) builtRows.push({ slot: builtRows.length + 1, value: 0, pct: 0 });
-                rows = builtRows;
-            } else {
-                // Fallback: no usable pct data, use nums only (original behaviour)
-                const sliceNums = allNums.slice(0, numCount);
-                const total     = sliceNums.reduce((s, v) => s + v, 0);
-                rows = Array.from({ length: 5 }, (_, i) => {
-                    const value = sliceNums[i] ?? 0;
-                    const pct   = total > 0 ? value / total * 100 : 0;
-                    return { slot: i + 1, value, pct };
-                });
-            }
+            const rows = Array.from({ length: 5 }, (_, i) => {
+                const value = sliceNums[i] ?? 0;
+                const pct   = i < count
+                    ? (usePcts ? slicePcts[i] : (total > 0 ? value / total * 100 : 0))
+                    : 0;
+                return { slot: i + 1, value, pct };
+            });
 
             if (bstatUpdateMode && bstatDealt) {
                 // Snapshot the current scores as "previous" before overwriting
@@ -2439,7 +2422,7 @@
 
             // Delta vs previous score (only shown after an Update Score)
             let deltaHtml = '';
-            if (bstatPrev && bstatPrev[i] && r.value != null) {
+            if (bstatPrev && bstatPrev[i] && r.value > 0) {
                 const diff = r.value - bstatPrev[i].value;
                 if (diff > 0) {
                     deltaHtml = `<span style="font-size:9px;color:#34d399;font-weight:700;white-space:nowrap;">
@@ -2465,7 +2448,7 @@
                             <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${r.pct.toFixed(1)}%</span>
                         </div>
                         <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
-                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value != null ? r.value.toLocaleString() : '—'}</span>
+                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value > 0 ? r.value.toLocaleString() : '—'}</span>
                             ${deltaHtml}
                         </div>
                     </div>
