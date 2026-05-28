@@ -404,7 +404,8 @@
                     </div>
 
                     <!-- Total -->
-                    <div id="battle-stats-total" class="hidden text-right text-[12px] text-slate-200 font-bold pt-2 border-t border-slate-700 mt-2">
+                    <div id="battle-stats-total" class="hidden text-right text-[12px] text-slate-200 font-bold pt-2 border-t border-slate-700 mt-2 flex items-center justify-end gap-2">
+                        <span id="battle-stats-total-delta"></span>
                         Total: <span id="battle-stats-total-val">—</span>
                     </div>
 
@@ -2394,6 +2395,24 @@
         }).join('');
 
         totalVal.textContent = total.toLocaleString();
+
+        // Show increase/decrease vs previous total
+        const totalDeltaEl = document.getElementById('battle-stats-total-delta');
+        if (totalDeltaEl) {
+            if (bstatPrev) {
+                const prevTotal = bstatPrev.reduce((s, r) => s + r.value, 0);
+                const diff = total - prevTotal;
+                if (diff > 0) {
+                    totalDeltaEl.innerHTML = `<span style="color:#34d399;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-up" style="font-size:9px;"></i> +${diff.toLocaleString()}</span>`;
+                } else if (diff < 0) {
+                    totalDeltaEl.innerHTML = `<span style="color:#f87171;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-down" style="font-size:9px;"></i> ${diff.toLocaleString()}</span>`;
+                } else {
+                    totalDeltaEl.innerHTML = `<span style="color:#64748b;font-size:11px;">no change</span>`;
+                }
+            } else {
+                totalDeltaEl.innerHTML = '';
+            }
+        }
         totalEl.classList.remove('hidden');
     }
 
@@ -2404,6 +2423,8 @@
         renderBStatBars();
         setStatus('');
         document.getElementById('battle-stats-total').classList.add('hidden');
+        const deltaEl = document.getElementById('battle-stats-total-delta');
+        if (deltaEl) deltaEl.innerHTML = '';
         document.getElementById('battle-stats-clear').classList.add('hidden');
         document.getElementById('battle-stats-update').classList.add('hidden');
         const uploadRow = document.getElementById('bstat-upload-row');
