@@ -939,23 +939,50 @@
             });
         }
 
+        // ── Display name overrides applied inside parseName (raw namePart → display name) ──
+        // Needed for filenames whose camelCase doesn't auto-split correctly,
+        // e.g. "Joanofarc" → "Joan Of Arc",  "Morganlefay" → "Morgan Le Fay"
+        const _parseNameOverrides = {
+            'Joanofarc':   'Joan Of Arc',
+            'MorganleFay': 'Morgan Le Fay',
+            'Morganlefay': 'Morgan Le Fay',
+            'SMerry':      'S. Merry',
+        };
+
         function parseName(filename) {
             let parts = filename.split('_');
             let namePart = parts[1] || parts[0];
             let num = parts.length > 2 ? parseInt(parts[2], 10) : 1;
             // Only append number for true alternates (_02+); _01 is always the base form
             let numStr = num > 1 ? ` ${num}` : '';
+            // Check explicit override first (before camelCase splitting)
+            if (_parseNameOverrides[namePart]) return _parseNameOverrides[namePart] + numStr;
             namePart = namePart.replace(/([A-Z])/g, ' $1').trim();
             return namePart + numStr;
         }
 
-        // ── Explicit name overrides: parseName result → DB key (or null = not in DB) ──
+        // ── Explicit name overrides: display name → characterDatabase key ──
         const charNameOverrides = {
-            'Rey':       'Ray',       
-            'Rita 2':    'Rita Maid', 
-            'Cow Queen': 'Cowqueen',  
-            'MorganleFay': 'Morgan le Fay',  
+            'Rey':           'Ray',
+            'Rita 2':        'Rita Maid',
+            'Cow Queen':     'Cowqueen',
+            'Morgan Le Fay': 'Morgan Le Fay',
+            'Joan Of Arc':   'Joanofarc',
+            'S. Merry':      'SMerry',
         };
+
+        // ── Search aliases: typed shorthand → substring to match against display names (lowercase) ──
+        const searchAliases = {
+            'mlf':    'morgan le fay',
+            'smerry': 's merry',
+        };
+
+        // Resolve a raw search term against aliases (exact match only).
+        // Falls through to normal substring search if no alias matches.
+        function resolveSearch(raw) {
+            if (!raw) return raw;
+            return searchAliases[raw] || raw;
+        }
 
         // Pre-built normalised (no-space, lowercase) index — populated after characterDatabase
         const _dbIndex = {};
@@ -998,7 +1025,7 @@
             'Pc_Isolde_01', 'Pc_Joanofarc_01', 
             'Pc_Jessi_01', 'Pc_Karishara_01', 
             'Pc_Katrin_01', 'Pc_Kay_01', 
-            'Pc_Kirke_01', 'Pc_Lancelot_01', 
+            'Pc_Circe_01', 'Pc_Lancelot_01', 
             'Pc_Lilith_01', 'Pc_Lisa_01', 
             'Pc_Lohengrin_01', 'Pc_Lua_01', 
             'Pc_Lucy_01', 'Pc_Lueira_01', 
@@ -1050,7 +1077,7 @@
           'Karishara': { class: 'Wizard', element: 'Fire', position: 'Back', rarity: '5' },
           'Katrin': { class: 'Wizard', element: 'Frost', position: 'Back', rarity: '5' },
           'Kay': { class: 'Knight', element: 'Fire', position: 'Front', rarity: '5' },
-          'Kirke': { class: 'Wizard', element: 'Nature', position: 'Back', rarity: '5' },
+          'Circe': { class: 'Wizard', element: 'Nature', position: 'Back', rarity: '5' },
           'Lancelot': { class: 'Knight', element: 'Radiance', position: 'Front', rarity: '5' },
           'Lilith': { class: 'Knight', element: 'Chaos', position: 'Middle', rarity: '5' },
           'Lisa': { class: 'Archer', element: 'Chaos', position: 'Middle', rarity: '5' },
@@ -1062,7 +1089,7 @@
           'Merry': { class: 'Wizard', element: 'Nature', position: 'Back', rarity: '4' },
           'SMerry': { class: 'Wizard', element: 'Frost', position: 'Back', rarity: '5' },
           'Mia': { class: 'Knight', element: 'Shock', position: 'Front', rarity: '5' },
-          'MorganleFay': { class: 'Wizard', element: 'Holy', position: 'Middle', rarity: '5' },
+          'Morgan Le Fay': { class: 'Wizard', element: 'Holy', position: 'Middle', rarity: '5' },
           'Morgana': { class: 'Wizard', element: 'Chaos', position: 'Back', rarity: '5' },
           'Morgause': { class: 'Wizard', element: 'Fire', position: 'Back', rarity: '5' },
           'Nesha': { class: 'Archer', element: 'Radiance', position: 'Back', rarity: '5' },
@@ -1129,7 +1156,7 @@
             'Ab_Joanofarc_01', 'Ab_Jessi_01', 
             'Ab_Kanna_01', 'Ab_Karishara_01', 
             'Ab_Katrin_01', 'Ab_Kay_01', 
-            'Ab_Kirke_01', 'Ab_Lancelot_01', 
+            'Ab_Circe_01', 'Ab_Lancelot_01', 
             'Ab_Lilith_01', 'Ab_Lisa_01', 
             'Ab_Lohengrin_01', 'Ab_Lua_01', 
             'Ab_Lucius_01', 'Ab_Lucy_01', 
@@ -1162,7 +1189,7 @@
             'Pet_Guinevere_01', 'Pet_Hikage_01', 
             'Pet_Isabel_01', 'Pet_Joanofarc_01', 
             'Pet_Karishara_01', 'Pet_Katrin_01', 
-            'Pet_Kay_01', 'Pet_Kirke_01', 
+            'Pet_Kay_01', 'Pet_Circe_01', 
             'Pet_Lancelot_01', 'Pet_Lilith_01', 
             'Pet_Lisa_01', 'Pet_Lohengrin_01', 
             'Pet_Lua_01', 'Pet_Lueira_01', 
@@ -1496,7 +1523,8 @@
         }
 
         function applyCharacterFilters() {
-            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            const rawSearch = (document.getElementById('modal-search').value || '').toLowerCase();
+            const search = resolveSearch(rawSearch);
             const chars = db.characters;
             const filtered = chars.filter(item => {
                 const info = getCharInfo(item.name);
@@ -1515,8 +1543,26 @@
         }
         // ─────────────────────────────────────────────────────
 
-        // ── Pet Filter State ──────────────────────────────────
-        const activePetFilters = { rarity: new Set(), element: new Set() };
+        // ── Gem batch-select state ────────────────────────────
+        let gemBatchMode = false;
+
+        function toggleGemBatch() {
+            gemBatchMode = !gemBatchMode;
+            const btn  = document.getElementById('gem-batch-btn');
+            const hint = document.getElementById('gem-batch-hint');
+            if (gemBatchMode) {
+                btn.classList.add('active');
+                btn.querySelector('i').style.color = '#4b6bfb';
+                btn.querySelector('span').style.color = '#e2e8f0';
+                hint.classList.remove('hidden');
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('i').style.color = '';
+                btn.querySelector('span').style.color = '';
+                hint.classList.add('hidden');
+            }
+        }
+        // ─────────────────────────────────────────────────────
 
         function toggleAllPetFilter(cat) {
             const allValues = { rarity: ['3','4','5'], element: ['Fire','Frost','Nature','Holy','Shock','Chaos','Radiance'] };
@@ -1562,7 +1608,8 @@
         }
 
         function applyPetFilters() {
-            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            const rawSearch = (document.getElementById('modal-search').value || '').toLowerCase();
+            const search = resolveSearch(rawSearch);
             const pets = db.pets;
             const filtered = pets.filter(item => {
                 const info = getCharInfo(item.name);
@@ -1586,8 +1633,12 @@
             searchEl.placeholder = `Search ${sectionLabel} by name...`;
             const isChar = type === 'character';
             const isPet  = type === 'pet';
+            const isGem  = type === 'gem';
             document.getElementById('character-filters').classList.toggle('hidden', !isChar);
             document.getElementById('pet-filters').classList.toggle('hidden', !isPet);
+            document.getElementById('gem-filters').classList.toggle('hidden', !isGem);
+            // Reset batch mode whenever the gem modal opens
+            if (!isGem && gemBatchMode) toggleGemBatch();
             if (isChar) {
                 resetFilters();
             } else if (isPet) {
@@ -1733,7 +1784,8 @@
         function filterCharacters() { applyCharacterFilters(); }
 
         function applyGenericSearch() {
-            const search = (document.getElementById('modal-search').value || '').toLowerCase();
+            const rawSearch = (document.getElementById('modal-search').value || '').toLowerCase();
+            const search = resolveSearch(rawSearch);
             let items = [];
             if (currentActiveCategory === 'card') {
                 items = db.cards;
@@ -1804,8 +1856,11 @@
                 if (match) {
                     const petIdx = parseInt(match[1]);
                     const gemIdx = parseInt(match[2]);
-                    petsData[petIdx].gems[gemIdx] = item.name;
-                    // Validate this specific gem slot to ensure it's compatible with the pet
+                    if (gemBatchMode) {
+                        petsData[petIdx].gems = [item.name, item.name, item.name, item.name];
+                    } else {
+                        petsData[petIdx].gems[gemIdx] = item.name;
+                    }
                     validatePetGems(petIdx);
                 }
             } else if (currentActiveCategory === 'ultimate') {
@@ -1862,7 +1917,11 @@
             closeModal();
         }
 
-        function closeModal() { const m = document.getElementById('selection-modal'); m.style.display = 'none'; }
+        function closeModal() {
+            const m = document.getElementById('selection-modal');
+            m.style.display = 'none';
+            if (gemBatchMode) toggleGemBatch();
+        }
         
         function setupPetDragDrop() {
             document.querySelectorAll('[data-pet-idx]').forEach(slot => {
@@ -2224,17 +2283,14 @@
             console.log('[BStats RIGHT]', rightText);
 
             // ── Step 2: Extract large damage numbers from the LEFT strip ──
-            // Match comma-formatted numbers like 306,844,899 OR plain ≥4-digit runs
-            // We keep them in top-to-bottom order (order of appearance in OCR output).
+            // Match comma-formatted numbers like 306,844,899 OR plain >=4-digit runs.
+            // Returns numbers >= 1000 only (zero-damage entries produce no text on screen).
             function extractNums(text) {
                 const out  = [];
-                // Match sequences of digits+commas that represent numbers (greedy, at least 4 chars)
                 const re   = /\d[\d,]{3,}/g;
                 let m;
                 while ((m = re.exec(text)) !== null) {
-                    // Normalise: strip commas, parse
                     const raw = m[0].replace(/,/g, '');
-                    // Reject if more than 12 digits (OCR garbage) or less than 4
                     if (raw.length < 4 || raw.length > 12) continue;
                     const val = parseInt(raw, 10);
                     if (val >= 1000) out.push(val);
@@ -2243,15 +2299,15 @@
             }
 
             // ── Step 3: Extract percentages from the RIGHT strip ──
+            // Allow 0.00 so zero-damage rows can be detected by position.
             function extractPcts(text) {
                 const out = [];
-                // Match  xx.xx  or  x.xx  (the % sign is often missed; we grab any decimal)
                 const re  = /\b(\d{1,3})\.(\d{1,2})\b/g;
                 let m;
                 while ((m = re.exec(text)) !== null) {
                     const v = parseFloat(m[1] + '.' + m[2]);
-                    // Percentages must be between 0.01 and 100
-                    if (v >= 0.01 && v <= 100) out.push(v);
+                    // Allow 0.00 explicitly; reject anything over 100
+                    if (v >= 0 && v <= 100) out.push(v);
                 }
                 return out;
             }
@@ -2261,35 +2317,58 @@
 
             console.log('[BStats] nums:', allNums, 'pcts:', allPcts);
 
-            // Deduplicate preserving first-occurrence order
+            // Deduplicate nums preserving first-occurrence order
             const seenN = new Set();
             allNums = allNums.filter(v => { if (seenN.has(v)) return false; seenN.add(v); return true; });
-            const seenP = new Set();
-            allPcts = allPcts.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
+            // Do NOT deduplicate pcts — multiple rows can share the same value (e.g. two 0.00 entries)
 
-            if (allNums.length === 0) {
+            if (allNums.length === 0 && allPcts.length === 0) {
                 setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
                 return;
             }
 
             // ── Step 4: Build 5 rows in screenshot (top-to-bottom) order ──
-            const count     = Math.min(5, allNums.length);
-            const sliceNums = allNums.slice(0, count);
-            const total     = sliceNums.reduce((s, v) => s + v, 0);
+            // A character with 0 damage shows "0.00%" but no number in the left column.
+            // Use the pct array as the authoritative position guide: for each pct entry,
+            // if pct === 0 that row is a zero-damage slot; otherwise consume the next number.
+            const pctCount = Math.min(5, allPcts.length);
+            const numCount = Math.min(5, allNums.length);
+            const rowCount = Math.max(pctCount, numCount);
 
-            // Use OCR percentages if we got exactly the right count and they sum near 100;
-            // otherwise recalculate from the raw numbers (more reliable).
-            const slicePcts = allPcts.slice(0, count);
-            const pctSum    = slicePcts.reduce((s, v) => s + v, 0);
-            const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
+            if (rowCount === 0) {
+                setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
+                return;
+            }
 
-            const rows = Array.from({ length: 5 }, (_, i) => {
-                const value = sliceNums[i] ?? 0;
-                const pct   = i < count
-                    ? (usePcts ? slicePcts[i] : (total > 0 ? value / total * 100 : 0))
-                    : 0;
-                return { slot: i + 1, value, pct };
-            });
+            let rows;
+            if (pctCount >= numCount && pctCount > 0) {
+                // Pcts give us enough info to place zeros in the right position
+                let numIdx = 0;
+                const builtRows = [];
+                for (let i = 0; i < pctCount; i++) {
+                    const pct = allPcts[i];
+                    let value;
+                    if (pct === 0) {
+                        value = 0;
+                    } else {
+                        value = allNums[numIdx] ?? 0;
+                        numIdx++;
+                    }
+                    builtRows.push({ slot: i + 1, value, pct });
+                }
+                // Pad to 5 if fewer than 5 rows were found
+                while (builtRows.length < 5) builtRows.push({ slot: builtRows.length + 1, value: 0, pct: 0 });
+                rows = builtRows;
+            } else {
+                // Fallback: no usable pct data, use nums only (original behaviour)
+                const sliceNums = allNums.slice(0, numCount);
+                const total     = sliceNums.reduce((s, v) => s + v, 0);
+                rows = Array.from({ length: 5 }, (_, i) => {
+                    const value = sliceNums[i] ?? 0;
+                    const pct   = total > 0 ? value / total * 100 : 0;
+                    return { slot: i + 1, value, pct };
+                });
+            }
 
             if (bstatUpdateMode && bstatDealt) {
                 // Snapshot the current scores as "previous" before overwriting
@@ -2360,7 +2439,7 @@
 
             // Delta vs previous score (only shown after an Update Score)
             let deltaHtml = '';
-            if (bstatPrev && bstatPrev[i] && r.value > 0) {
+            if (bstatPrev && bstatPrev[i] && r.value != null) {
                 const diff = r.value - bstatPrev[i].value;
                 if (diff > 0) {
                     deltaHtml = `<span style="font-size:9px;color:#34d399;font-weight:700;white-space:nowrap;">
@@ -2386,7 +2465,7 @@
                             <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${r.pct.toFixed(1)}%</span>
                         </div>
                         <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
-                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value > 0 ? r.value.toLocaleString() : '—'}</span>
+                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value != null ? r.value.toLocaleString() : '—'}</span>
                             ${deltaHtml}
                         </div>
                     </div>
@@ -3242,6 +3321,18 @@
                     <span id="pet-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
                     <button onclick="resetPetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Gem Filters (only show for gem selection) -->
+        <div id="gem-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="filter-label">OPTIONS</span>
+                <button id="gem-batch-btn" onclick="toggleGemBatch()" class="filter-btn flex items-center gap-1.5 px-3" style="width:auto;" title="Fill all 4 gem slots with the selected gem">
+                    <i class="fa-solid fa-clone text-slate-400" style="font-size:13px;"></i>
+                    <span class="text-[11px] font-semibold text-slate-400" style="white-space:nowrap;">Batch Select</span>
+                </button>
+                <span id="gem-batch-hint" class="text-[11px] text-slate-500 italic hidden">— next pick fills all 4 slots</span>
             </div>
         </div>
 
