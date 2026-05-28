@@ -440,7 +440,7 @@
                                     <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <div class="w-20 h-20 bg-slotBg border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p1', 'pet')" draggable="true" data-pet-idx="0">
+                                    <div class="w-24 h-24 bg-slotBg border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p1', 'pet')" draggable="true" data-pet-idx="0">
                                         <div id="pet-display-p1" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
@@ -469,7 +469,7 @@
                                     <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <div class="w-20 h-20 bg-slotBg border-2 border-orange-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p2', 'pet')" draggable="true" data-pet-idx="1">
+                                    <div class="w-24 h-24 bg-slotBg border-2 border-orange-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p2', 'pet')" draggable="true" data-pet-idx="1">
                                         <div id="pet-display-p2" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
@@ -498,7 +498,7 @@
                                     <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <div class="w-20 h-20 bg-slotBg border-2 border-red-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" onclick="openModal('p3', 'pet')" draggable="true" data-pet-idx="2">
+                                    <div class="w-24 h-24 bg-slotBg border-2 border-red-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p3', 'pet')" draggable="true" data-pet-idx="2">
                                         <div id="pet-display-p3" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
@@ -681,154 +681,7 @@
         </div>
     </div>
 
-    <div id="selection-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-borderCool w-full max-w-5xl rounded-xl p-6 flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="modal-title" class="text-lg font-bold tracking-wide text-slate-100 capitalize">Select Item</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <!-- Character Filters (only show for character selection) -->
-            <div id="character-filters" class="hidden mb-4 pb-3 border-b border-borderCool flex flex-col gap-2">
-                <!-- Row 1: Class + Rarity -->
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="filter-label">CLASS</span>
-                    <button onclick="toggleAllFilter('class')" id="fbtn-class-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="toggleFilter('class','Knight')" id="fbtn-class-Knight" class="filter-btn" title="Knight">
-                        <img src="Icons/class_knight.webp" class="filter-icon-img" alt="Knight">
-                    </button>
-                    <button onclick="toggleFilter('class','Archer')" id="fbtn-class-Archer" class="filter-btn" title="Archer">
-                        <img src="Icons/class_archer.webp" class="filter-icon-img" alt="Archer">
-                    </button>
-                    <button onclick="toggleFilter('class','Wizard')" id="fbtn-class-Wizard" class="filter-btn" title="Wizard">
-                        <img src="Icons/class_wizard.webp" class="filter-icon-img" alt="Wizard">
-                    </button>
-                    <button onclick="toggleFilter('class','Healer')" id="fbtn-class-Healer" class="filter-btn" title="Healer">
-                        <img src="Icons/class_healer.webp" class="filter-icon-img" alt="Healer">
-                    </button>
-                    <!-- Divider -->
-                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
-                    <span class="filter-label">RARITY</span>
-                    <button onclick="toggleAllFilter('rarity')" id="fbtn-rarity-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="toggleFilter('rarity','3')" id="fbtn-rarity-3" class="filter-btn" title="3★">
-                        <span class="star-badge r3">3★</span>
-                    </button>
-                    <button onclick="toggleFilter('rarity','4')" id="fbtn-rarity-4" class="filter-btn" title="4★">
-                        <span class="star-badge r4">4★</span>
-                    </button>
-                    <button onclick="toggleFilter('rarity','5')" id="fbtn-rarity-5" class="filter-btn" title="5★">
-                        <span class="star-badge r5">5★</span>
-                    </button>
-                </div>
-                <!-- Row 2: Position + Element -->
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="filter-label">POSITION</span>
-                    <button onclick="toggleAllFilter('position')" id="fbtn-position-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="toggleFilter('position','Forward')" id="fbtn-position-Forward" class="filter-btn" title="Forward">
-                        <img src="Icons/position_forward.webp" class="filter-icon-img" alt="Forward">
-                    </button>
-                    <button onclick="toggleFilter('position','Center')" id="fbtn-position-Center" class="filter-btn" title="Center">
-                        <img src="Icons/position_center.webp" class="filter-icon-img" alt="Center">
-                    </button>
-                    <button onclick="toggleFilter('position','Backward')" id="fbtn-position-Backward" class="filter-btn" title="Backward">
-                        <img src="Icons/position_backward.webp" class="filter-icon-img" alt="Backward">
-                    </button>
-                    <!-- Divider -->
-                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
-                    <span class="filter-label">ELEMENT</span>
-                    <button onclick="toggleAllFilter('element')" id="fbtn-element-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="toggleFilter('element','Fire')" id="fbtn-element-Fire" class="filter-btn" title="Fire">
-                        <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
-                    </button>
-                    <button onclick="toggleFilter('element','Frost')" id="fbtn-element-Frost" class="filter-btn" title="Frost">
-                        <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
-                    </button>
-                    <button onclick="toggleFilter('element','Nature')" id="fbtn-element-Nature" class="filter-btn" title="Nature">
-                        <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
-                    </button>
-                    <button onclick="toggleFilter('element','Holy')" id="fbtn-element-Holy" class="filter-btn" title="Holy">
-                        <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
-                    </button>
-                    <button onclick="toggleFilter('element','Shock')" id="fbtn-element-Shock" class="filter-btn" title="Shock">
-                        <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
-                    </button>
-                    <button onclick="toggleFilter('element','Chaos')" id="fbtn-element-Chaos" class="filter-btn" title="Chaos">
-                        <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
-                    </button>
-                    <button onclick="toggleFilter('element','Radiance')" id="fbtn-element-Radiance" class="filter-btn" title="Radiance">
-                        <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
-                    </button>
-                    <!-- Count + Reset pushed to end -->
-                    <div class="flex items-center gap-2 ml-auto">
-                        <span id="char-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
-                        <button onclick="resetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Pet Filters (only show for pet selection) -->
-            <div id="pet-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="filter-label">RARITY</span>
-                    <button onclick="toggleAllPetFilter('rarity')" id="pfbtn-rarity-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="togglePetFilter('rarity','3')" id="pfbtn-rarity-3" class="filter-btn" title="3★">
-                        <span class="star-badge r3">3★</span>
-                    </button>
-                    <button onclick="togglePetFilter('rarity','4')" id="pfbtn-rarity-4" class="filter-btn" title="4★">
-                        <span class="star-badge r4">4★</span>
-                    </button>
-                    <button onclick="togglePetFilter('rarity','5')" id="pfbtn-rarity-5" class="filter-btn" title="5★">
-                        <span class="star-badge r5">5★</span>
-                    </button>
-                    <!-- Divider -->
-                    <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
-                    <span class="filter-label">ELEMENT</span>
-                    <button onclick="toggleAllPetFilter('element')" id="pfbtn-element-all" class="filter-btn active" title="All">
-                        <span class="filter-all-btn">★</span>
-                    </button>
-                    <button onclick="togglePetFilter('element','Fire')" id="pfbtn-element-Fire" class="filter-btn" title="Fire">
-                        <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
-                    </button>
-                    <button onclick="togglePetFilter('element','Frost')" id="pfbtn-element-Frost" class="filter-btn" title="Frost">
-                        <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
-                    </button>
-                    <button onclick="togglePetFilter('element','Nature')" id="pfbtn-element-Nature" class="filter-btn" title="Nature">
-                        <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
-                    </button>
-                    <button onclick="togglePetFilter('element','Holy')" id="pfbtn-element-Holy" class="filter-btn" title="Holy">
-                        <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
-                    </button>
-                    <button onclick="togglePetFilter('element','Shock')" id="pfbtn-element-Shock" class="filter-btn" title="Shock">
-                        <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
-                    </button>
-                    <button onclick="togglePetFilter('element','Chaos')" id="pfbtn-element-Chaos" class="filter-btn" title="Chaos">
-                        <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
-                    </button>
-                    <button onclick="togglePetFilter('element','Radiance')" id="pfbtn-element-Radiance" class="filter-btn" title="Radiance">
-                        <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
-                    </button>
-                    <!-- Count + Reset pushed to end -->
-                    <div class="flex items-center gap-2 ml-auto">
-                        <span id="pet-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
-                        <button onclick="resetPetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
-                    </div>
-                </div>
-            </div>
 
-            <input type="text" id="modal-search" placeholder="Search by name..." class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-accentBlue mb-4" onkeyup="filterGrid()">
-            <div id="modal-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 overflow-y-auto pr-2 pb-4"></div>
-        </div>
-    </div>
 
     <script>
         // State Management
@@ -1783,7 +1636,8 @@
             } else {
                 renderModalGrid(db[`${type}s`] || [], false);
             }
-            document.getElementById('selection-modal').classList.remove('hidden');
+            const m = document.getElementById('selection-modal');
+            m.style.display = 'flex';
         }
 
         function renderModalGrid(items, isChar) {
@@ -2007,7 +1861,7 @@
             closeModal();
         }
 
-        function closeModal() { document.getElementById('selection-modal').classList.add('hidden'); }
+        function closeModal() { const m = document.getElementById('selection-modal'); m.style.display = 'none'; }
         
         function setupPetDragDrop() {
             document.querySelectorAll('[data-pet-idx]').forEach(slot => {
@@ -3222,6 +3076,158 @@
     </script>
 
 </div><!-- /zoom-lock -->
+
+<!-- Selection modal — lives OUTSIDE zoom-lock so position:fixed works correctly against the viewport.
+     CSS transform on a parent breaks fixed positioning; elements become positioned
+     relative to the transformed ancestor instead of the viewport. -->
+<div id="selection-modal" class="hidden" style="position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,0.80);backdrop-filter:blur(4px);">
+    <div class="bg-cardBg border border-borderCool w-full rounded-xl p-6 flex flex-col" style="max-width:72rem;max-height:90vh;">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-title" class="text-lg font-bold tracking-wide text-slate-100 capitalize">Select Item</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Character Filters (only show for character selection) -->
+        <div id="character-filters" class="hidden mb-4 pb-3 border-b border-borderCool flex flex-col gap-2">
+            <!-- Row 1: Class + Rarity -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="filter-label">CLASS</span>
+                <button onclick="toggleAllFilter('class')" id="fbtn-class-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="toggleFilter('class','Knight')" id="fbtn-class-Knight" class="filter-btn" title="Knight">
+                    <img src="Icons/class_knight.webp" class="filter-icon-img" alt="Knight">
+                </button>
+                <button onclick="toggleFilter('class','Archer')" id="fbtn-class-Archer" class="filter-btn" title="Archer">
+                    <img src="Icons/class_archer.webp" class="filter-icon-img" alt="Archer">
+                </button>
+                <button onclick="toggleFilter('class','Wizard')" id="fbtn-class-Wizard" class="filter-btn" title="Wizard">
+                    <img src="Icons/class_wizard.webp" class="filter-icon-img" alt="Wizard">
+                </button>
+                <button onclick="toggleFilter('class','Healer')" id="fbtn-class-Healer" class="filter-btn" title="Healer">
+                    <img src="Icons/class_healer.webp" class="filter-icon-img" alt="Healer">
+                </button>
+                <!-- Divider -->
+                <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                <span class="filter-label">RARITY</span>
+                <button onclick="toggleAllFilter('rarity')" id="fbtn-rarity-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="toggleFilter('rarity','3')" id="fbtn-rarity-3" class="filter-btn" title="3★">
+                    <span class="star-badge r3">3★</span>
+                </button>
+                <button onclick="toggleFilter('rarity','4')" id="fbtn-rarity-4" class="filter-btn" title="4★">
+                    <span class="star-badge r4">4★</span>
+                </button>
+                <button onclick="toggleFilter('rarity','5')" id="fbtn-rarity-5" class="filter-btn" title="5★">
+                    <span class="star-badge r5">5★</span>
+                </button>
+            </div>
+            <!-- Row 2: Position + Element -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="filter-label">POSITION</span>
+                <button onclick="toggleAllFilter('position')" id="fbtn-position-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="toggleFilter('position','Forward')" id="fbtn-position-Forward" class="filter-btn" title="Forward">
+                    <img src="Icons/position_forward.webp" class="filter-icon-img" alt="Forward">
+                </button>
+                <button onclick="toggleFilter('position','Center')" id="fbtn-position-Center" class="filter-btn" title="Center">
+                    <img src="Icons/position_center.webp" class="filter-icon-img" alt="Center">
+                </button>
+                <button onclick="toggleFilter('position','Backward')" id="fbtn-position-Backward" class="filter-btn" title="Backward">
+                    <img src="Icons/position_backward.webp" class="filter-icon-img" alt="Backward">
+                </button>
+                <!-- Divider -->
+                <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                <span class="filter-label">ELEMENT</span>
+                <button onclick="toggleAllFilter('element')" id="fbtn-element-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="toggleFilter('element','Fire')" id="fbtn-element-Fire" class="filter-btn" title="Fire">
+                    <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
+                </button>
+                <button onclick="toggleFilter('element','Frost')" id="fbtn-element-Frost" class="filter-btn" title="Frost">
+                    <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
+                </button>
+                <button onclick="toggleFilter('element','Nature')" id="fbtn-element-Nature" class="filter-btn" title="Nature">
+                    <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
+                </button>
+                <button onclick="toggleFilter('element','Holy')" id="fbtn-element-Holy" class="filter-btn" title="Holy">
+                    <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
+                </button>
+                <button onclick="toggleFilter('element','Shock')" id="fbtn-element-Shock" class="filter-btn" title="Shock">
+                    <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
+                </button>
+                <button onclick="toggleFilter('element','Chaos')" id="fbtn-element-Chaos" class="filter-btn" title="Chaos">
+                    <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
+                </button>
+                <button onclick="toggleFilter('element','Radiance')" id="fbtn-element-Radiance" class="filter-btn" title="Radiance">
+                    <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
+                </button>
+                <!-- Count + Reset pushed to end -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <span id="char-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
+                    <button onclick="resetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pet Filters (only show for pet selection) -->
+        <div id="pet-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="filter-label">RARITY</span>
+                <button onclick="toggleAllPetFilter('rarity')" id="pfbtn-rarity-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="togglePetFilter('rarity','3')" id="pfbtn-rarity-3" class="filter-btn" title="3★">
+                    <span class="star-badge r3">3★</span>
+                </button>
+                <button onclick="togglePetFilter('rarity','4')" id="pfbtn-rarity-4" class="filter-btn" title="4★">
+                    <span class="star-badge r4">4★</span>
+                </button>
+                <button onclick="togglePetFilter('rarity','5')" id="pfbtn-rarity-5" class="filter-btn" title="5★">
+                    <span class="star-badge r5">5★</span>
+                </button>
+                <!-- Divider -->
+                <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                <span class="filter-label">ELEMENT</span>
+                <button onclick="toggleAllPetFilter('element')" id="pfbtn-element-all" class="filter-btn active" title="All">
+                    <span class="filter-all-btn">★</span>
+                </button>
+                <button onclick="togglePetFilter('element','Fire')" id="pfbtn-element-Fire" class="filter-btn" title="Fire">
+                    <img src="Icons/element_fire.webp" class="filter-icon-img" alt="Fire">
+                </button>
+                <button onclick="togglePetFilter('element','Frost')" id="pfbtn-element-Frost" class="filter-btn" title="Frost">
+                    <img src="Icons/element_frost.webp" class="filter-icon-img" alt="Frost">
+                </button>
+                <button onclick="togglePetFilter('element','Nature')" id="pfbtn-element-Nature" class="filter-btn" title="Nature">
+                    <img src="Icons/element_nature.webp" class="filter-icon-img" alt="Nature">
+                </button>
+                <button onclick="togglePetFilter('element','Holy')" id="pfbtn-element-Holy" class="filter-btn" title="Holy">
+                    <img src="Icons/element_holy.webp" class="filter-icon-img" alt="Holy">
+                </button>
+                <button onclick="togglePetFilter('element','Shock')" id="pfbtn-element-Shock" class="filter-btn" title="Shock">
+                    <img src="Icons/element_shock.webp" class="filter-icon-img" alt="Shock">
+                </button>
+                <button onclick="togglePetFilter('element','Chaos')" id="pfbtn-element-Chaos" class="filter-btn" title="Chaos">
+                    <img src="Icons/element_chaos.webp" class="filter-icon-img" alt="Chaos">
+                </button>
+                <button onclick="togglePetFilter('element','Radiance')" id="pfbtn-element-Radiance" class="filter-btn" title="Radiance">
+                    <img src="Icons/element_radiance.webp" class="filter-icon-img" alt="Radiance">
+                </button>
+                <!-- Count + Reset pushed to end -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <span id="pet-showing-count" class="text-[11px] text-slate-400 font-medium"></span>
+                    <button onclick="resetPetFilters()" class="text-[11px] text-slate-400 hover:text-white bg-[#111218] border border-slate-700 hover:border-slate-500 rounded-md px-3 py-1 transition-all">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <input type="text" id="modal-search" placeholder="Search by name..." class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-accentBlue mb-4" onkeyup="filterGrid()">
+        <div id="modal-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 overflow-y-auto pr-2 pb-4"></div>
+    </div>
+</div>
 
 <!-- Folder access banner — lives OUTSIDE zoom-lock so position:fixed works correctly.
      CSS transform on a parent breaks fixed positioning; elements become positioned
