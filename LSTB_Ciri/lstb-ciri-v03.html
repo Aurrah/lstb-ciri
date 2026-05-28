@@ -1541,7 +1541,6 @@
             const countEl = document.getElementById('char-showing-count');
             if (countEl) countEl.textContent = `Showing ${filtered.length} of ${chars.length} Characters`;
         }
-        // ─────────────────────────────────────────────────────
 
         // ── Gem batch-select state ────────────────────────────
         let gemBatchMode = false;
@@ -1563,65 +1562,87 @@
             }
         }
         // ─────────────────────────────────────────────────────
+        
+        // 1. Initialize the state
+const activePetFilters = { rarity: new Set(), element: new Set() };
 
-        function toggleAllPetFilter(cat) {
-            const allValues = { rarity: ['3','4','5'], element: ['Fire','Frost','Nature','Holy','Shock','Chaos','Radiance'] };
-            allValues[cat].forEach(val => {
-                activePetFilters[cat].delete(val);
-                const btn = document.getElementById(`pfbtn-${cat}-${val}`);
-                btn && btn.classList.remove('active');
-            });
-            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+// 2. Toggle "All" for a category
+function toggleAllPetFilter(cat) {
+    // Clear all specific selections for this category
+    const allValues = { 
+        rarity: ['3','4','5'], 
+        element: ['Fire','Frost','Nature','Holy','Shock','Chaos','Radiance'] 
+    };
+    
+    allValues[cat].forEach(val => {
+        activePetFilters[cat].delete(val);
+        const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+        btn && btn.classList.remove('active');
+    });
+    
+    // Set "all" button active
+    const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+    allBtn && allBtn.classList.add('active');
+    
+    applyPetFilters();
+}
+
+// 3. Toggle individual filter
+function togglePetFilter(cat, val) {
+    const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+    const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+    
+    if (activePetFilters[cat].has(val)) {
+        activePetFilters[cat].delete(val);
+        btn && btn.classList.remove('active');
+        // If nothing selected, re-activate "all"
+        if (activePetFilters[cat].size === 0) {
             allBtn && allBtn.classList.add('active');
+        }
+    } else {
+        activePetFilters[cat].add(val);
+        btn && btn.classList.add('active');
+        // Deactivate "all" when a specific is chosen
+        allBtn && allBtn.classList.remove('active');
+    }
+    applyPetFilters();
+}
+        // ─────────────────────────────────────────────────────
+        // 4. Reset function (Optional but recommended for consistency)
+        function resetPetFilters() {
+            ['rarity', 'element'].forEach(cat => {
+                activePetFilters[cat].forEach(val => {
+                    const btn = document.getElementById(`pfbtn-${cat}-${val}`);
+                    btn && btn.classList.remove('active');
+                });
+             activePetFilters[cat].clear();
+                const allBtn = document.getElementById(`pfbtn-${cat}-all`);
+                allBtn && allBtn.classList.add('active');
+            });
+            document.getElementById('modal-search').value = '';
             applyPetFilters();
         }
 
-        function togglePetFilter(cat, val) {
-            const btn = document.getElementById(`pfbtn-${cat}-${val}`);
-            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
-            if (activePetFilters[cat].has(val)) {
-                activePetFilters[cat].delete(val);
-                btn && btn.classList.remove('active');
-                if (activePetFilters[cat].size === 0) {
-                    allBtn && allBtn.classList.add('active');
-                }
-            } else {
-                activePetFilters[cat].add(val);
-                btn && btn.classList.add('active');
-                allBtn && allBtn.classList.remove('active');
-            }
-            applyPetFilters();
-        }
-
-        function togglePetFilter(cat, val) {
-            const btn = document.getElementById(`pfbtn-${cat}-${val}`);
-            const allBtn = document.getElementById(`pfbtn-${cat}-all`);
-            if (activePetFilters[cat].has(val)) {
-                activePetFilters[cat].delete(val);
-                btn && btn.classList.remove('active');
-                if (activePetFilters[cat].size === 0) {
-                    allBtn && allBtn.classList.add('active');
-                }
-            } else {
-                activePetFilters[cat].add(val);
-                btn && btn.classList.add('active');
-                allBtn && allBtn.classList.remove('active');
-            }
-            applyPetFilters();
-        }
-
+        // 5. Apply filters (Ensure this matches your data structure)
         function applyPetFilters() {
             const rawSearch = (document.getElementById('modal-search').value || '').toLowerCase();
-            const search = resolveSearch(rawSearch);
+            const search = resolveSearch(rawSearch); // Ensure this function exists
             const pets = db.pets;
+    
             const filtered = pets.filter(item => {
-                const info = getCharInfo(item.name);
+                const info = getCharInfo(item.name); // Assuming this works for pets too
+        
                 if (search && !item.name.toLowerCase().includes(search)) return false;
-                if (activePetFilters.rarity.size  && !activePetFilters.rarity.has(info.rarity || ''))  return false;
+        
+                // Filter Checks
+                if (activePetFilters.rarity.size && !activePetFilters.rarity.has(String(info.rarity || ''))) return false;
                 if (activePetFilters.element.size && !activePetFilters.element.has(info.element || '')) return false;
+        
                 return true;
             });
-            renderModalGrid(filtered, false);
+    
+            renderModalGrid(filtered, false); // 'false' indicates this is not a character grid
+    
             const countEl = document.getElementById('pet-showing-count');
             if (countEl) countEl.textContent = `Showing ${filtered.length} of ${pets.length} Pets`;
         }
