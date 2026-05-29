@@ -959,6 +959,14 @@
                             </div>
                         `).join('')}
                     </div>
+                    <div class="flex gap-1.5 mt-0.5">
+                        <button id="slot-off-btn-${index}" onclick="applySlotAutoGear(${index},'offensive')" title="Auto-equip offensive preset" style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#f87171'" onmouseout="resetSlotOffBtn(${index})">
+                            <i class="fa-solid fa-fire" style="font-size:9px;"></i>Off
+                        </button>
+                        <button id="slot-def-btn-${index}" onclick="applySlotAutoGear(${index},'defensive')" title="Auto-equip defensive preset" style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa'" onmouseout="resetSlotDefBtn(${index})">
+                            <i class="fa-solid fa-shield-halved" style="font-size:9px;"></i>Def
+                        </button>
+                    </div>
                     <div class="relative bg-slotBg border border-slate-700 rounded-lg h-40 flex flex-col items-center justify-center cursor-pointer overflow-hidden" onclick="openModal('${index}', 'card')">
                         <div id="card-display-${index}" class="card-display w-full h-full">
     ${
@@ -1014,6 +1022,7 @@
             });
             updateFormation();
         renderPets();
+        restoreSlotGearBtnStates();
         }
 
         function updateFormation() {
@@ -1697,6 +1706,68 @@
                 applyAutoGear(mode);
             }
             updateAutoGearButtons();
+            // Close the modal — behaves like selecting a gear piece
+            closeModal();
+        }
+
+        // Per-slot active gear mode: index -> 'none'|'offensive'|'defensive'
+        const slotGearModes = [null,null,null,null,null].map(() => 'none');
+
+        function restoreSlotGearBtnStates() {
+            slotGearModes.forEach((mode, idx) => {
+                resetSlotOffBtn(idx);
+                resetSlotDefBtn(idx);
+            });
+        }
+
+        function resetSlotOffBtn(idx) {
+            const btn = document.getElementById('slot-off-btn-' + idx);
+            if (!btn) return;
+            if (slotGearModes[idx] === 'offensive') { btn.style.borderColor='#ef4444'; btn.style.color='#f87171'; }
+            else { btn.style.borderColor='#2d3142'; btn.style.color='#475569'; }
+        }
+        function resetSlotDefBtn(idx) {
+            const btn = document.getElementById('slot-def-btn-' + idx);
+            if (!btn) return;
+            if (slotGearModes[idx] === 'defensive') { btn.style.borderColor='#3b82f6'; btn.style.color='#60a5fa'; }
+            else { btn.style.borderColor='#2d3142'; btn.style.color='#475569'; }
+        }
+
+        // Apply auto-gear preset to a single character slot
+        function applySlotAutoGear(slotIndex, mode) {
+            // Toggle off if already active
+            if (slotGearModes[slotIndex] === mode) {
+                slotGearModes[slotIndex] = 'none';
+                renderTeamGrid();
+                return;
+            }
+            slotGearModes[slotIndex] = mode;
+            const slot = slotData[slotIndex];
+            if (!slot || !slot.character) { renderTeamGrid(); return; }
+            const info = getCharInfo(slot.character);
+            const cls  = info.class;
+            if (!cls || !autoGearPresets[cls]) { renderTeamGrid(); return; }
+            const preset = autoGearPresets[cls][mode];
+            if (!preset) { renderTeamGrid(); return; }
+            Object.keys(preset).forEach(cat => {
+                const gearName = preset[cat];
+                if (!gearName) return;
+                const gearEntry = (db[cat] || []).find(g => g.name === gearName);
+                if (!gearEntry) return;
+                if (gearEntry.class && gearEntry.class !== cls) return;
+                if (gearEntry.excludeClass && gearEntry.excludeClass === cls) return;
+                if (gearEntry.unique) {
+                    const alreadyUsed = slotData.some((s, i) => i !== slotIndex && s.gear[cat] === gearName);
+                    if (alreadyUsed) return;
+                }
+                slot.gear[cat] = gearName;
+            });
+            renderTeamGrid();
+            // Close the gear modal if it's currently open for this slot
+            const modal = document.getElementById('selection-modal');
+            if (modal && modal.style.display !== 'none' && currentActiveCategory === 'gear') {
+                closeModal();
+            }
         }
 
         function updateAutoGearButtons() {
@@ -1737,9 +1808,10 @@
             const btn = document.getElementById('multi-select-toggle-btn');
             if (!btn) return;
             const count = multiSelectedItems.size;
+            const maxSlots = currentActiveCategory === 'pet' ? 3 : 5;
             if (multiSelectMode) {
                 btn.classList.add('active');
-                btn.innerHTML = `<i class="fa-solid fa-check-square"></i> Multi (${count})`;
+                btn.innerHTML = `<i class="fa-solid fa-check-square"></i> Multi (${count}/${maxSlots})`;
             } else {
                 btn.classList.remove('active');
                 btn.innerHTML = `<i class="fa-regular fa-square-check"></i> Multi-Select`;
@@ -2018,9 +2090,12 @@ function togglePetFilter(cat, val) {
                 const rar = info.rarity || '';
                 const rarColor = rar === '5' ? '#fbbf24' : rar === '4' ? '#a78bfa' : '#64748b';
                 const isSelected = multiSelectMode && multiSelectedItems.has(item.name);
+                const maxSlots = currentActiveCategory === 'pet' ? 3 : 5;
+                const atCap = multiSelectMode && multiSelectedItems.size >= maxSlots && !isSelected;
                 const itemBox = document.createElement('div');
-                itemBox.className = "item-card bg-[#1a1c28] border border-[#2d3142] rounded-lg p-1.5 flex flex-col items-center justify-between cursor-pointer hover:border-[#4b6bfb] hover:bg-[#1e2240] transition-all" + (isSelected ? ' multi-selected' : '');
-                itemBox.style.cssText = 'aspect-ratio:3/4;';
+                itemBox.className = "item-card bg-[#1a1c28] border border-[#2d3142] rounded-lg p-1.5 flex flex-col items-center justify-between transition-all" + (isSelected ? ' multi-selected' : '') + (atCap ? '' : ' cursor-pointer hover:border-[#4b6bfb] hover:bg-[#1e2240]');
+                if (atCap) itemBox.style.cssText = 'aspect-ratio:3/4;opacity:0.35;cursor:not-allowed;';
+                else itemBox.style.cssText = 'aspect-ratio:3/4;';
                 itemBox.onclick = () => selectItem(item);
                 // Use object-top for characters/pets, object-contain for gear
                 const imgFit = (isChar || isPet) ? 'object-cover object-top' : 'object-contain';
@@ -2111,6 +2186,9 @@ function togglePetFilter(cat, val) {
                 if (multiSelectedItems.has(item.name)) {
                     multiSelectedItems.delete(item.name);
                 } else {
+                    // Cap selection at max slots for each type
+                    const maxSlots = currentActiveCategory === 'pet' ? 3 : 5;
+                    if (multiSelectedItems.size >= maxSlots) return; // silently ignore — already at cap
                     multiSelectedItems.add(item.name);
                 }
                 updateMultiSelectBtn();
@@ -2176,6 +2254,10 @@ function togglePetFilter(cat, val) {
                 // If auto gear was set, mark as custom (untoggle)
                 autoGearMode = 'none';
                 updateAutoGearButtons();
+                // Also reset the per-slot Off/Def active state for this slot
+                if (typeof slotGearModes !== 'undefined') {
+                    slotGearModes[currentActiveSection] = 'none';
+                }
             } else if (currentActiveCategory === 'pet') {
                 const slotIndex = parseInt(currentActiveSection.replace('p', '')) - 1;
                 // Clear this pet from any other pet slot first
@@ -2363,6 +2445,8 @@ function togglePetFilter(cat, val) {
         let ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
         renderUltimateRotation();
 
+        let _ultDragFromIdx = null;
+
         function renderUltimateRotation() {
             const container = document.getElementById('ultimate-rotation-container');
             if (!container) return;
@@ -2382,11 +2466,52 @@ function togglePetFilter(cat, val) {
                 
                 const slotDiv = document.createElement('div');
                 slotDiv.className = 'ult-rotation-slot';
+                slotDiv.dataset.ultIdx = idx;
                 
                 // Character icon
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'ult-char-icon' + (slot.character ? '' : ' empty');
-                iconDiv.style.cursor = 'pointer';
+                iconDiv.style.cursor = 'grab';
+                iconDiv.draggable = true;
+                iconDiv.dataset.ultIdx = idx;
+
+                // Drag source events — use module-level _ultDragFromIdx because
+                // dataTransfer.getData() returns '' during dragover (browser security)
+                iconDiv.addEventListener('dragstart', (e) => {
+                    _ultDragFromIdx = idx;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', String(idx));
+                    setTimeout(() => { iconDiv.style.opacity = '0.45'; }, 0);
+                });
+                iconDiv.addEventListener('dragend', () => {
+                    _ultDragFromIdx = null;
+                    iconDiv.style.opacity = '';
+                    document.querySelectorAll('.ult-rotation-slot').forEach(s => { s.style.outline = ''; });
+                });
+
+                // Drop target events
+                slotDiv.addEventListener('dragover', (e) => {
+                    if (_ultDragFromIdx !== null && _ultDragFromIdx !== idx) {
+                        e.preventDefault();
+                        slotDiv.style.outline = '2px solid #4b6bfb';
+                        slotDiv.style.borderRadius = '0.5rem';
+                    }
+                });
+                slotDiv.addEventListener('dragleave', (e) => {
+                    if (!slotDiv.contains(e.relatedTarget)) slotDiv.style.outline = '';
+                });
+                slotDiv.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    slotDiv.style.outline = '';
+                    const from = _ultDragFromIdx;
+                    const to   = idx;
+                    _ultDragFromIdx = null;
+                    if (from !== null && from !== to) {
+                        [ultimateRotation[from], ultimateRotation[to]] = [ultimateRotation[to], ultimateRotation[from]];
+                        renderUltimateRotation();
+                    }
+                });
+
                 iconDiv.onclick = () => selectUltimateCharacter(idx);
                 
                 if (slot.character === 'x2') {
@@ -2471,13 +2596,17 @@ function togglePetFilter(cat, val) {
             });
             
             // Add +/- controls after the last visible slot
-            const controlDiv = document.createElement('div');
-            controlDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;';
-            controlDiv.innerHTML = `
-                ${ultimateRotation.length < 13 ? `<button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>` : ''}
-                ${ultimateRotation.length > 2 ? `<button onclick="removeUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#f87171;font-size:20px;font-weight:700;" title="Remove slot" onmouseover="this.style.borderColor='#f87171';this.style.background='#2a121d'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">-</button>` : ''}
-            `;
-            container.appendChild(controlDiv);
+            // Hide controls when a repeat marker (x2/auto) is active — rotation is "locked"
+            const hasRepeatMarker = repeatIdx !== -1;
+            if (!hasRepeatMarker) {
+                const controlDiv = document.createElement('div');
+                controlDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;';
+                controlDiv.innerHTML = `
+                    ${ultimateRotation.length < 13 ? `<button onclick="addUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#475569;font-size:20px;font-weight:700;" title="Add slot" onmouseover="this.style.borderColor='#4b6bfb';this.style.background='#1e2240'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">+</button>` : ''}
+                    ${ultimateRotation.length > 2 ? `<button onclick="removeUltimateSlot()" style="width:60px;height:32px;border-radius:0.5rem;background:#20222f;border:2px solid #2d3142;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;color:#f87171;font-size:20px;font-weight:700;" title="Remove slot" onmouseover="this.style.borderColor='#f87171';this.style.background='#2a121d'" onmouseout="this.style.borderColor='#2d3142';this.style.background='#20222f'">-</button>` : ''}
+                `;
+                container.appendChild(controlDiv);
+            }
         }
 
         function removeUltimateSlot() {
@@ -2571,117 +2700,202 @@ function togglePetFilter(cat, val) {
         document.getElementById('battle-stats-update').classList.add('hidden');
     }
 
-    // ── Main processing pipeline — Tesseract.js, number-column crop, gentle preprocessing ──
+    // ── Main processing pipeline — multi-pass full-image OCR ──
     async function processBStatImage(file) {
         setStatus('Reading image…');
         try {
             const bitmap = await createImageBitmap(file);
             const W = bitmap.width, H = bitmap.height;
 
-            // ── Step 1: Run TWO passes on different crops to maximise accuracy ──
-            // Pass A — left ~55% of image: captures the large damage numbers (left-aligned)
-            // Pass B — right ~45% of image: captures the percentage column (right-aligned)
-            // Each crop is upscaled to at least 1200px wide for Tesseract accuracy.
-
-            async function ocrStrip(sx, sw) {
-                const TARGET = 1400;
-                const scale  = Math.max(1, TARGET / sw);
+            // ── Preprocessing helper ──
+            // Renders the full bitmap onto a canvas with a given contrast/brightness
+            // treatment, upscaled to TARGET width for Tesseract accuracy.
+            function buildCanvas(contrastThreshold, contrastMult) {
+                const TARGET = 1600;
+                const scale  = Math.max(1, TARGET / W);
                 const c = document.createElement('canvas');
-                c.width  = Math.round(sw * scale);
-                c.height = Math.round(H  * scale);
+                c.width  = Math.round(W * scale);
+                c.height = Math.round(H * scale);
                 const cx = c.getContext('2d');
-
-                // Draw the cropped region scaled up
-                cx.drawImage(bitmap, sx, 0, sw, H, 0, 0, c.width, c.height);
-
-                // Gentle greyscale + mild contrast boost — preserve digit shapes
-                // Do NOT over-crush: threshold at 50, multiply by 1.6 only
+                cx.drawImage(bitmap, 0, 0, W, H, 0, 0, c.width, c.height);
                 const id = cx.getImageData(0, 0, c.width, c.height);
                 const d  = id.data;
                 for (let i = 0; i < d.length; i += 4) {
                     const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-                    const b = Math.min(255, Math.max(0, (g - 50) * 1.6));
+                    const b = Math.min(255, Math.max(0, (g - contrastThreshold) * contrastMult));
                     d[i] = d[i+1] = d[i+2] = b;
                 }
                 cx.putImageData(id, 0, 0);
-
-                // PSM 6 = uniform block; whitelist digits, comma, dot, percent
-                const r = await Tesseract.recognize(c, 'eng', {
-                    tessedit_char_whitelist: '0123456789,.',
-                    tessedit_pageseg_mode: '6',
-                });
-                return r.data.text;
+                return c;
             }
 
-            const leftW  = Math.round(W * 0.62);
-            const rightX = Math.round(W * 0.55);
-            const rightW = W - rightX;
+            // ── Three passes with different contrast treatments ──
+            // Pass 1: gentle (baseline)
+            // Pass 2: stronger contrast — helps faint text
+            // Pass 3: inverted — bright text on dark bg becomes dark on white
+            function buildCanvasInverted() {
+                const TARGET = 1600;
+                const scale  = Math.max(1, TARGET / W);
+                const c = document.createElement('canvas');
+                c.width  = Math.round(W * scale);
+                c.height = Math.round(H * scale);
+                const cx = c.getContext('2d');
+                cx.drawImage(bitmap, 0, 0, W, H, 0, 0, c.width, c.height);
+                const id = cx.getImageData(0, 0, c.width, c.height);
+                const d  = id.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+                    // Invert: light text on dark bg → dark text on light bg
+                    const inv = 255 - g;
+                    const b   = Math.min(255, Math.max(0, (inv - 40) * 1.8));
+                    d[i] = d[i+1] = d[i+2] = b;
+                }
+                cx.putImageData(id, 0, 0);
+                return c;
+            }
 
-            setStatus('Running OCR…');
-            const [leftText, rightText] = await Promise.all([
-                ocrStrip(0,     leftW),
-                ocrStrip(rightX, rightW),
-            ]);
+            setStatus('Running OCR (pass 1/3)…');
+            const r1 = await Tesseract.recognize(buildCanvas(50, 1.6), 'eng', {
+                tessedit_char_whitelist: '0123456789.,',
+                tessedit_pageseg_mode: '6',
+            });
+            setStatus('Running OCR (pass 2/3)…');
+            const r2 = await Tesseract.recognize(buildCanvas(30, 2.2), 'eng', {
+                tessedit_char_whitelist: '0123456789.,',
+                tessedit_pageseg_mode: '6',
+            });
+            setStatus('Running OCR (pass 3/3)…');
+            const r3 = await Tesseract.recognize(buildCanvasInverted(), 'eng', {
+                tessedit_char_whitelist: '0123456789.,',
+                tessedit_pageseg_mode: '6',
+            });
 
-            console.log('[BStats LEFT]',  leftText);
-            console.log('[BStats RIGHT]', rightText);
+            const allText = [r1.data.text, r2.data.text, r3.data.text].join('\n');
+            console.log('[BStats P1]', r1.data.text);
+            console.log('[BStats P2]', r2.data.text);
+            console.log('[BStats P3]', r3.data.text);
 
-            // ── Step 2: Extract large damage numbers from the LEFT strip ──
-            // Match comma-formatted numbers like 306,844,899 OR plain ≥4-digit runs
-            // We keep them in top-to-bottom order (order of appearance in OCR output).
+            // ── Number extraction ──
+            // The game uses DOTS as thousand separators: 3.815.702.420
+            // Pattern: dots as thousand separators e.g. 4.555.615.886 or 321.861.840
+            // Also handle comma-separated and plain digit variants.
             function extractNums(text) {
-                const out  = [];
-                // Match sequences of digits+commas that represent numbers (greedy, at least 4 chars)
-                const re   = /\d[\d,]{3,}/g;
+                const out = [];
+                // Greedy dot-separated match — no word boundary on left so we
+                // don't miss a leading single digit like the 4 in 4.555.615.886.
+                // Require at least TWO dot-groups so we don't confuse with decimals.
+                // e.g. 4.555.615.886  →  raw = 4555615886
+                //      321.861.840    →  raw = 321861840
+                //      13.911.077.720 →  raw = 13911077720
+                const reDot = /(?<!\d\.\d{1,2})\d{1,3}(?:\.\d{3}){2,}/g;
                 let m;
-                while ((m = re.exec(text)) !== null) {
-                    // Normalise: strip commas, parse
+                while ((m = reDot.exec(text)) !== null) {
+                    const raw = m[0].replace(/\./g, '');
+                    if (raw.length < 4 || raw.length > 13) continue;
+                    const val = parseInt(raw, 10);
+                    if (val >= 1000) out.push(val);
+                }
+                // Single dot-group (e.g. 275.996 → only 6 digits total, still valid)
+                const reDotShort = /(?<!\d)\d{1,3}\.\d{3}(?!\d)/g;
+                while ((m = reDotShort.exec(text)) !== null) {
+                    const raw = m[0].replace(/\./g, '');
+                    if (raw.length < 4 || raw.length > 13) continue;
+                    const val = parseInt(raw, 10);
+                    if (val >= 1000) out.push(val);
+                }
+                // Plain runs of 4+ digits (no separator) as fallback
+                const rePlain = /(?<![.\d])\d{4,13}(?![.\d])/g;
+                while ((m = rePlain.exec(text)) !== null) {
+                    const val = parseInt(m[0], 10);
+                    if (val >= 1000) out.push(val);
+                }
+                // Comma-separated fallback: 4,555,615,886
+                const reComma = /\d{1,3}(?:,\d{3}){2,}/g;
+                while ((m = reComma.exec(text)) !== null) {
                     const raw = m[0].replace(/,/g, '');
-                    // Reject if more than 12 digits (OCR garbage) or less than 4
-                    if (raw.length < 4 || raw.length > 12) continue;
+                    if (raw.length < 4 || raw.length > 13) continue;
                     const val = parseInt(raw, 10);
                     if (val >= 1000) out.push(val);
                 }
                 return out;
             }
 
-            // ── Step 3: Extract percentages from the RIGHT strip ──
+            // ── Percentage extraction ──
+            // The game uses COMMAS as decimal separators: 39,45% or 3,33%
+            // Also handle dot-decimal as fallback.
             function extractPcts(text) {
                 const out = [];
-                // Match  xx.xx  or  x.xx  (the % sign is often missed; we grab any decimal)
-                const re  = /\b(\d{1,3})\.(\d{1,2})\b/g;
+                // Comma-decimal: 39,45  or  3,33  or  0,85
+                // Require the match is NOT immediately preceded/followed by another digit
+                const reComma = /(?<!\d)\d{1,2},\d{2}(?!\d)/g;
                 let m;
-                while ((m = re.exec(text)) !== null) {
-                    const v = parseFloat(m[1] + '.' + m[2]);
-                    // Percentages must be between 0.01 and 100
+                while ((m = reComma.exec(text)) !== null) {
+                    const v = parseFloat(m[0].replace(',', '.'));
+                    if (v >= 0.01 && v <= 100) out.push(v);
+                }
+                // Dot-decimal fallback: only match 1-2 digit integers (e.g. 39.45, 5.30)
+                // Exclude anything that looks like a thousand separator (digit.3digits)
+                const reDot = /(?<!\d)\d{1,2}\.\d{2}(?!\d)/g;
+                while ((m = reDot.exec(text)) !== null) {
+                    const v = parseFloat(m[0]);
                     if (v >= 0.01 && v <= 100) out.push(v);
                 }
                 return out;
             }
 
-            let allNums = extractNums(leftText);
-            let allPcts = extractPcts(rightText);
+            // ── Merge results from all passes ──
+            // Collect numbers from every pass, deduplicate by value,
+            // keep only the top-5 largest (damage rows are sorted high→low in-game).
+            const numsPerPass = [r1, r2, r3].map(r => extractNums(r.data.text));
+            const pctsPerPass = [r1, r2, r3].map(r => extractPcts(r.data.text));
 
-            console.log('[BStats] nums:', allNums, 'pcts:', allPcts);
+            // Union all numbers, then pick the 5 that appear in the most passes
+            // (consensus approach — reduces OCR noise).
+            const numVotes = new Map(); // value → pass count
+            numsPerPass.forEach(nums => {
+                const seen = new Set();
+                nums.forEach(v => {
+                    if (!seen.has(v)) { seen.add(v); numVotes.set(v, (numVotes.get(v) || 0) + 1); }
+                });
+            });
 
-            // Deduplicate preserving first-occurrence order
-            const seenN = new Set();
-            allNums = allNums.filter(v => { if (seenN.has(v)) return false; seenN.add(v); return true; });
+            // Sort by vote count desc, then by value desc (higher damage first within same votes)
+            let candidates = [...numVotes.entries()]
+                .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+                .map(([v]) => v);
+
+            // The game always shows exactly 5 rows; take top 5 candidates
+            // but re-sort them by the ORDER they appear in pass-1 text (top→bottom)
+            // so bars render in the correct visual order.
+            const top5 = candidates.slice(0, 5);
+            const pass1Nums = numsPerPass[0];
+            top5.sort((a, b) => {
+                const ia = pass1Nums.indexOf(a);
+                const ib = pass1Nums.indexOf(b);
+                if (ia === -1 && ib === -1) return b - a;
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+            });
+
+            // Percentages: take from whichever pass gave the most results
+            const pctsBestPass = pctsPerPass.reduce((best, cur) => cur.length > best.length ? cur : best, []);
+            // Deduplicate pcts
             const seenP = new Set();
-            allPcts = allPcts.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
+            const allPcts = pctsBestPass.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
 
-            if (allNums.length === 0) {
+            console.log('[BStats] top5 nums:', top5, 'pcts:', allPcts, 'votes:', Object.fromEntries(numVotes));
+
+            if (top5.length === 0) {
                 setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
                 return;
             }
 
-            // ── Step 4: Build 5 rows in screenshot (top-to-bottom) order ──
-            const count     = Math.min(5, allNums.length);
-            const sliceNums = allNums.slice(0, count);
+            // ── Step 4: Build 5 rows ──
+            const count     = Math.min(5, top5.length);
+            const sliceNums = top5.slice(0, count);
             const total     = sliceNums.reduce((s, v) => s + v, 0);
 
-            // Use OCR percentages if we got exactly the right count and they sum near 100;
-            // otherwise recalculate from the raw numbers (more reliable).
             const slicePcts = allPcts.slice(0, count);
             const pctSum    = slicePcts.reduce((s, v) => s + v, 0);
             const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
