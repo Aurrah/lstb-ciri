@@ -248,6 +248,11 @@
             opacity: 1;
             pointer-events: auto;
         }
+        /* When time is visible but NOT hovering, hide the × specifically */
+        .ult-rotation-slot.has-time:not(:hover) .ult-add-time-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
         .ult-add-time-btn:hover {
             border-color: #4b6bfb;
             color: #e2e8f0;
@@ -260,10 +265,74 @@
             background: #1a1c26;
         }
         .ult-arrow {
-            margin-top: 12px;
             color: #475569;
             font-size: 18px;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
+            margin-top: 28px; /* vertically centers with 80px icon */
+        }
+
+        /* ── Multi-select toggle button ── */
+        .multi-select-btn {
+            background: #1a1c28;
+            border: 1px solid #2d3142;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            height: 36px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .multi-select-btn:hover { border-color: #4b6bfb; background: #21243a; color: #e2e8f0; }
+        .multi-select-btn.active { border-color: #4b6bfb; background: #1e2240; color: #e2e8f0; box-shadow: 0 0 0 1px #4b6bfb44 inset; }
+        .multi-select-btn i { font-size: 12px; }
+
+        /* ── Auto Gear button ── */
+        .auto-gear-btn {
+            background: #1a1c28;
+            border: 1px solid #2d3142;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            height: 36px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .auto-gear-btn:hover { background: #21243a; }
+        .auto-gear-btn.offensive { border-color: #ef4444; background: #1a0a0a; color: #f87171; }
+        .auto-gear-btn.defensive { border-color: #3b82f6; background: #0a1020; color: #60a5fa; }
+
+        /* ── Color coding for formation slots ── */
+        .form-slot-backward { border-color: #60a5fa55 !important; background: #0c162622 !important; }
+        .form-slot-center   { border-color: #fbbf2455 !important; background: #1a150522 !important; }
+        .form-slot-forward  { border-color: #f8717155 !important; background: #1a0a0a22 !important; }
+
+        /* ── Team slot position color coding ── */
+        .slot-pos-forward  { border-left: 3px solid #f87171 !important; }
+        .slot-pos-center   { border-left: 3px solid #fbbf24 !important; }
+        .slot-pos-backward { border-left: 3px solid #60a5fa !important; }
+
+        /* ── Item selected highlight in multi-select ── */
+        .item-card.multi-selected {
+            border-color: #4b6bfb !important;
+            background: #1e2240 !important;
+            box-shadow: 0 0 0 2px #4b6bfb66 inset;
         }
 
         /* ── Battle Stats Panel ── */
@@ -536,15 +605,15 @@
                                     <span class="text-[10px] text-slate-500 font-bold w-8">TOP</span>
                                     <div class="flex-1 flex flex-col items-center">
                                         <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Backward">
-                                        <div id="form-slot-0" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="0">-</div>
+                                        <div id="form-slot-0" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="0">-</div>
                                     </div>
                                     <div class="flex-1 flex flex-col items-center">
                                         <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Center">
-                                        <div id="form-slot-1" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="1">-</div>
+                                        <div id="form-slot-1" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="1">-</div>
                                     </div>
                                     <div class="flex-1 flex flex-col items-center">
                                         <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Forward">
-                                        <div id="form-slot-2" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="2">-</div>
+                                        <div id="form-slot-2" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="2">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -554,13 +623,13 @@
                                 <div class="flex items-center gap-3">
                                     <span class="text-[10px] text-slate-500 font-bold w-8">BOT</span>
                                     <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-3" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="3">-</div>
+                                        <div id="form-slot-3" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="3">-</div>
                                     </div>
                                     <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-4" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="4">-</div>
+                                        <div id="form-slot-4" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="4">-</div>
                                     </div>
                                     <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-5" class="w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="5">-</div>
+                                        <div id="form-slot-5" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-600 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="5">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -620,6 +689,10 @@
             </div>
             <div class="flex items-center gap-2">
                 <span id="dtg-count-label" class="text-[10px] text-slate-500"></span>
+                <!-- View All Raid Scores button -->
+                <button id="dtg-all-raids-btn" onclick="dtgLoadAllRaids()" title="View most recent scores for all raid bosses" class="hidden bg-[#1a1e2e] border border-purple-700 hover:bg-purple-900/30 text-purple-400 text-xs font-semibold py-2 px-3 rounded-lg transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-dragon text-[11px]"></i>All Raids
+                </button>
                 <!-- Refresh button — visible after a folder is selected -->
                 <button id="dtg-refresh-btn" onclick="dtgLoad()" title="Reload current folder" class="hidden bg-[#1c1e29] border border-slate-700 hover:bg-slate-700/40 text-slate-400 text-xs font-semibold py-2 px-3 rounded-lg transition-all flex items-center gap-1.5">
                     <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
@@ -643,10 +716,10 @@
         </div>
 
         <!-- Canvas wrapper — dark gradient bg matching the reference image -->
-        <div id="dtg-canvas-wrap" class="relative rounded-xl overflow-hidden" style="background:linear-gradient(160deg,#040d1e 0%,#071628 45%,#040e1c 100%);border:1px solid #0e2040;min-height:260px;">
-            <canvas id="dtg-canvas" width="1500" height="260" style="width:100%;display:block;"></canvas>
+        <div id="dtg-canvas-wrap" class="relative rounded-xl overflow-hidden" style="background:linear-gradient(160deg,#040d1e 0%,#071628 45%,#040e1c 100%);border:1px solid #0e2040;min-height:360px;">
+            <canvas id="dtg-canvas" width="1500" height="380" style="width:100%;display:block;"></canvas>
             <!-- Placeholder shown before data is loaded -->
-            <div id="dtg-placeholder" class="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+            <div id="dtg-placeholder" class="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none" style="min-height:360px;">
                 <i class="fa-solid fa-chart-area text-4xl" style="color:rgba(75,107,251,0.15)"></i>
                 <span class="text-xs text-slate-600 italic">Select a preset folder to view damage history</span>
             </div>
@@ -705,7 +778,21 @@
         const categories = ['Weapon', 'Armor', 'Helmet', 'Rune'];
         
         // Gem database with element restrictions
-        const rawGems = ['amethyst-hexagon', 'amethyst-octagon', 'amethyst-round', 'amethyst-square', 'emerald-hexagon', 'emerald-octagon', 'emerald-round', 'emerald-square', 'opal-hexagon', 'opal-octagon', 'opal-round', 'opal-square', 'ruby-hexagon', 'ruby-octagon', 'ruby-round', 'ruby-square', 'sapphire-hexagon', 'sapphire-octagon', 'sapphire-round', 'sapphire-square', 'topaz-hexagon', 'topaz-octagon', 'topaz-round', 'topaz-square', 'turquoise-hexagon', 'turquoise-octagon', 'turquoise-round', 'turquoise-square'];
+        const rawGems = [
+            'amethyst-hexagon', 'amethyst-octagon', 
+            'amethyst-round', 'amethyst-square', 
+            'emerald-hexagon', 'emerald-octagon', 
+            'emerald-round', 'emerald-square', 
+            'opal-hexagon', 'opal-octagon', 
+            'opal-round', 'opal-square', 
+            'ruby-hexagon', 'ruby-octagon', 
+            'ruby-round', 'ruby-square', 
+            'sapphire-hexagon', 'sapphire-octagon', 
+            'sapphire-round', 'sapphire-square', 
+            'topaz-hexagon', 'topaz-octagon', 
+            'topaz-round', 'topaz-square', 
+            'turquoise-hexagon', 'turquoise-octagon', 
+            'turquoise-round', 'turquoise-square'];
         
         const gemElements = {
             'amethyst-hexagon': 'Chaos', 'amethyst-octagon': 'Chaos', 'amethyst-round': 'Chaos', 'amethyst-square': 'Chaos',
@@ -827,8 +914,11 @@
         slot.character
         ? (() => {
             const charData = db.characters.find(c => c.name === slot.character);
+            const charInfo = getCharInfo(slot.character);
+            const pos = charInfo.position || '';
+            const posColor = pos === 'Front' ? '#f87171' : pos === 'Middle' ? '#fbbf24' : pos === 'Back' ? '#60a5fa' : 'transparent';
             return `
-                <div class="relative w-full h-full">
+                <div class="relative w-full h-full" style="border-left: 4px solid ${posColor};">
                     <img 
                         src="${charData?.img || ''}" 
                         alt="${slot.character}"
@@ -1373,7 +1463,7 @@
             // 'Example Helmet',
             'Abyssal Ring', 'Achilles Helmet', 
             'Aegis', 'Claiomh Solais Ring', 
-            'Crown Of The Dead', 'Fire Dragons\'s Helmet', 
+            'Crown Of The Dead', 'Fire Dragon\'s Helmet', 
             'Goddess Ring', 'Healing Goddess Statue', 
             'Holy Fire Helmet', 'jade Seal', 'Red Hare', 
             'Red Ribboned Ring', 'Royal Cow Crown', 
@@ -1388,7 +1478,7 @@
                 'Aegis': 'aegis',
                 'Claiomh Solais Ring': 'claiomh-solais-ring',
                 'Crown Of The Dead': 'crown-of-the-dead',
-                'Fire Dragons\'s Helmet': 'fire-dragons-helmet',
+                'Fire Dragon\'s Helmet': 'fire-dragons-helmet',
                 'Goddess Ring': 'goddess-ring', 
                 'Healing Goddess Statue': 'healing-goddess-statue',
                 'Holy Fire Helmet': 'holy-fire-helmet',
@@ -1544,6 +1634,78 @@
 
         // ── Gem batch-select state ────────────────────────────
         let gemBatchMode = false;
+        // ── Multi-select state ────────────────────────────────
+        let multiSelectMode = false;
+        let multiSelectedItems = new Set(); // stores item names
+        // ── Auto-gear state ───────────────────────────────────
+        // 'none' | 'offensive' | 'defensive'
+        let autoGearMode = 'none';
+
+        // Auto gear presets: class → { offensive: {Weapon,Armor,Helmet,Rune}, defensive: {...} }
+        const autoGearPresets = {
+            Knight: {
+                offensive: { Weapon: 'Fragarach', Armor: 'Wild Combat Suit', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Focus' },
+                defensive: { Weapon: 'Fragarach', Armor: 'Merlin\'s Robe', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Focus' }
+            },
+            Archer: {
+                offensive: { Weapon: 'Sagittarius', Armor: 'Wild Combat Suit', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Focus' },
+                defensive: { Weapon: 'Sagittarius', Armor: 'Merlin\'s Robe', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Focus' }
+            },
+            Wizard: {
+                offensive: { Weapon: 'Thunderclap', Armor: 'Wild Combat Suit', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Focus' },
+                defensive: { Weapon: 'Thunderclap', Armor: 'Merlin\'s Robe', Helmet: 'Fire Dragon\'s Helm', Rune: 'Rune Of Focus' }
+            },
+            Healer: {
+                offensive: { Weapon: 'Fire Dragon\'s Banner', Armor: 'Wild Combat Suit', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Healing' },
+                defensive: { Weapon: 'Aquarius', Armor: 'Merlin\'s Robe', Helmet: 'Fire Dragon\'s Helmet', Rune: 'Rune Of Healing' }
+            }
+        };
+
+        function applyAutoGear(mode) {
+            if (mode === 'none') return;
+            slotData.forEach((slot, idx) => {
+                if (!slot.character) return;
+                const info = getCharInfo(slot.character);
+                const cls = info.class;
+                if (!cls || !autoGearPresets[cls]) return;
+                const preset = autoGearPresets[cls][mode];
+                if (!preset) return;
+                Object.keys(preset).forEach(cat => {
+                    const gearName = preset[cat];
+                    if (!gearName) return;
+                    // Check class restriction
+                    const gearEntry = (db[cat] || []).find(g => g.name === gearName);
+                    if (!gearEntry) return;
+                    if (gearEntry.class && gearEntry.class !== cls) return;
+                    if (gearEntry.excludeClass && gearEntry.excludeClass === cls) return;
+                    // For unique gear, only place in first slot that has this character class
+                    if (gearEntry.unique) {
+                        const alreadyUsed = slotData.some((s, i) => i < idx && s.gear[cat] === gearName);
+                        if (alreadyUsed) return;
+                    }
+                    slot.gear[cat] = gearName;
+                });
+            });
+            renderTeamGrid();
+        }
+
+        function toggleAutoGear(mode) {
+            if (autoGearMode === mode) {
+                autoGearMode = 'none';
+            } else {
+                autoGearMode = mode;
+                applyAutoGear(mode);
+            }
+            updateAutoGearButtons();
+        }
+
+        function updateAutoGearButtons() {
+            const offBtn = document.getElementById('auto-gear-off-btn');
+            const defBtn = document.getElementById('auto-gear-def-btn');
+            if (!offBtn || !defBtn) return;
+            offBtn.className = 'auto-gear-btn' + (autoGearMode === 'offensive' ? ' offensive' : '');
+            defBtn.className = 'auto-gear-btn' + (autoGearMode === 'defensive' ? ' defensive' : '');
+        }
 
         function toggleGemBatch() {
             gemBatchMode = !gemBatchMode;
@@ -1559,6 +1721,88 @@
                 btn.querySelector('i').style.color = '';
                 btn.querySelector('span').style.color = '';
                 hint.classList.add('hidden');
+            }
+        }
+
+        // ── Multi-select helpers ──────────────────────────────
+        function toggleMultiSelect() {
+            multiSelectMode = !multiSelectMode;
+            if (!multiSelectMode) multiSelectedItems.clear();
+            updateMultiSelectBtn();
+            // Re-render to update card states
+            filterGrid();
+        }
+
+        function updateMultiSelectBtn() {
+            const btn = document.getElementById('multi-select-toggle-btn');
+            if (!btn) return;
+            const count = multiSelectedItems.size;
+            if (multiSelectMode) {
+                btn.classList.add('active');
+                btn.innerHTML = `<i class="fa-solid fa-check-square"></i> Multi (${count})`;
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = `<i class="fa-regular fa-square-check"></i> Multi-Select`;
+            }
+            // Show/hide apply button
+            const applyBtn = document.getElementById('multi-select-apply-btn');
+            if (applyBtn) applyBtn.classList.toggle('hidden', !multiSelectMode || count === 0);
+        }
+
+        function applyMultiSelection() {
+            if (!multiSelectMode || multiSelectedItems.size === 0) return;
+            const type = currentActiveCategory;
+            const items = [...multiSelectedItems];
+            
+            if (type === 'character') {
+                // Fill empty slots first, then overwrite from slot 0
+                let targetSlots = slotData.map((s, i) => i).filter(i => !slotData[i].character);
+                if (targetSlots.length === 0) targetSlots = [0,1,2,3,4];
+                items.forEach((name, idx) => {
+                    if (idx >= targetSlots.length) return;
+                    const slotIdx = targetSlots[idx];
+                    // Clear character from other slots
+                    slotData.forEach((s, i) => { if (i !== slotIdx && s.character === name) s.character = null; });
+                    slotData[slotIdx].character = name;
+                });
+            } else if (type === 'card') {
+                let targetSlots = slotData.map((s, i) => i).filter(i => !slotData[i].card);
+                if (targetSlots.length === 0) targetSlots = [0,1,2,3,4];
+                items.forEach((name, idx) => {
+                    if (idx >= targetSlots.length) return;
+                    slotData[targetSlots[idx]].card = name;
+                });
+            } else if (type === 'pet') {
+                items.forEach((name, idx) => {
+                    if (idx >= 3) return;
+                    petsData[idx].name = name;
+                    petsData[idx].gems = [null, null, null, null];
+                });
+            }
+            
+            multiSelectMode = false;
+            multiSelectedItems.clear();
+            renderTeamGrid();
+            closeModal();
+        }
+
+        // ── Gear batch-select state ───────────────────────────
+        let gearBatchMode = false;
+
+        function toggleGearBatch() {
+            gearBatchMode = !gearBatchMode;
+            const btn  = document.getElementById('gear-batch-btn');
+            const hint = document.getElementById('gear-batch-hint');
+            if (gearBatchMode) {
+                btn.classList.add('active');
+                btn.querySelector('i').style.color = '#4b6bfb';
+                btn.querySelector('span').style.color = '#e2e8f0';
+                if (hint) hint.classList.remove('hidden');
+            } else {
+                btn.classList.remove('active');
+                btn.querySelector('i').style.color = '';
+                btn.querySelector('span').style.color = '';
+                if (hint) hint.classList.add('hidden');
             }
         }
         // ─────────────────────────────────────────────────────
@@ -1659,26 +1903,34 @@ function togglePetFilter(cat, val) {
             const isChar = type === 'character';
             const isPet  = type === 'pet';
             const isGem  = type === 'gem';
+            const isGear = type === 'gear';
             document.getElementById('character-filters').classList.toggle('hidden', !isChar);
             document.getElementById('pet-filters').classList.toggle('hidden', !isPet);
             document.getElementById('gem-filters').classList.toggle('hidden', !isGem);
+            document.getElementById('gear-filters').classList.toggle('hidden', !isGear);
+            // Show/hide multi-select bar
+            const msBar = document.getElementById('multi-select-bar');
+            const showMs = isChar || isPet || type === 'card';
+            if (msBar) msBar.classList.toggle('hidden', !showMs);
+            // Reset multi-select state
+            multiSelectMode = false;
+            multiSelectedItems.clear();
+            updateMultiSelectBtn();
             
             // Reset batch mode whenever the gem modal opens
             if (!isGem && gemBatchMode) toggleGemBatch();
             if (isChar) {
                 resetFilters();
-            } else if (type === 'gear') {
+            } else if (isGear) {
                 // For gear, filter by character class
-                const charName = slotData[slotIndex].character;
+                const charName = slotData[slotIndex]?.character;
                 const charInfo = getCharInfo(charName);
                 const charClass = charInfo.class || '';
                 const gearItems = db[gearCat] || [];
-                
                 // Filter items to only show those matching the character's class
                 const filteredItems = charClass
                     ? gearItems.filter(item => (!item.class || item.class === charClass) && item.excludeClass !== charClass)
                     : gearItems;
-                
                 renderModalGrid(filteredItems, false);
             } else if (type === 'gem') {
                 // For gems, filter by pet's element
@@ -1689,16 +1941,12 @@ function togglePetFilter(cat, val) {
                     const petInfo = getCharInfo(petName);
                     const petElement = petInfo.element || '';
                     const gemItems = db.gems || [];
-                    
-                    // Filter gems to only show those matching the pet's element
                     const filteredItems = petElement
                         ? gemItems.filter(item => item.element === petElement)
                         : gemItems;
-                    
                     renderModalGrid(filteredItems, false);
                 }
             } else if (type === 'ultimate') {
-                // For ultimate rotation, only show characters currently in the team
                 const teamCharacters = slotData
                     .map(slot => slot.character)
                     .filter(char => char !== null && char !== undefined);
@@ -1714,6 +1962,8 @@ function togglePetFilter(cat, val) {
             }
             const m = document.getElementById('selection-modal');
             m.style.display = 'flex';
+            // Focus search bar after render
+            setTimeout(() => { searchEl.focus(); }, 50);
         }
 
         function renderModalGrid(items, isChar) {
@@ -1767,28 +2017,34 @@ function togglePetFilter(cat, val) {
                 const el = info.element || '';
                 const rar = info.rarity || '';
                 const rarColor = rar === '5' ? '#fbbf24' : rar === '4' ? '#a78bfa' : '#64748b';
+                const isSelected = multiSelectMode && multiSelectedItems.has(item.name);
                 const itemBox = document.createElement('div');
-                itemBox.className = "item-card bg-[#1a1c28] border border-[#2d3142] rounded-lg p-1.5 flex flex-col items-center justify-between cursor-pointer hover:border-[#4b6bfb] hover:bg-[#1e2240] transition-all";
+                itemBox.className = "item-card bg-[#1a1c28] border border-[#2d3142] rounded-lg p-1.5 flex flex-col items-center justify-between cursor-pointer hover:border-[#4b6bfb] hover:bg-[#1e2240] transition-all" + (isSelected ? ' multi-selected' : '');
                 itemBox.style.cssText = 'aspect-ratio:3/4;';
                 itemBox.onclick = () => selectItem(item);
+                // Use object-top for characters/pets, object-contain for gear
+                const imgFit = (isChar || isPet) ? 'object-cover object-top' : 'object-contain';
                 itemBox.innerHTML = isChar ? `
                     <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden relative" style="min-height:60px">
-                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover object-top" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full ${imgFit}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
                         <div style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;color:#475569;font-size:9px">${item.name[0]}</div>
                         ${rar ? `<span style="position:absolute;top:3px;right:3px;font-size:8px;font-weight:700;color:${rarColor};text-shadow:0 1px 3px #000">${rar}★</span>` : ''}
+                        ${isSelected ? '<div style="position:absolute;inset:0;background:rgba(75,107,251,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-check text-white" style="font-size:20px;filter:drop-shadow(0 1px 3px #000)"></i></div>' : ''}
                     </div>
                     <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
                     ${el ? `<span class="char-el-badge badge-${el} mt-0.5">${el}</span>` : ''}
                 ` : isPet ? `
                     <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden relative" style="min-height:60px">
-                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full ${imgFit}" loading="lazy" onerror="this.style.display='none'">
                         ${rar ? `<span style="position:absolute;top:3px;right:3px;font-size:8px;font-weight:700;color:${rarColor};text-shadow:0 1px 3px #000">${rar}★</span>` : ''}
+                        ${isSelected ? '<div style="position:absolute;inset:0;background:rgba(75,107,251,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-check text-white" style="font-size:20px;filter:drop-shadow(0 1px 3px #000)"></i></div>' : ''}
                     </div>
                     <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
                     ${el ? `<span class="char-el-badge badge-${el} mt-0.5">${el}</span>` : ''}
                 ` : `
-                    <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden" style="min-height:60px">
-                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                    <div class="w-full flex-1 bg-[#111218] rounded mb-1 flex items-center justify-center text-[10px] text-slate-600 overflow-hidden relative" style="min-height:60px">
+                        <img src="${item.img}" alt="${item.name}" class="w-full h-full object-contain" loading="lazy" onerror="this.style.display='none'">
+                        ${isSelected ? '<div style="position:absolute;inset:0;background:rgba(75,107,251,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-check text-white" style="font-size:20px;filter:drop-shadow(0 1px 3px #000)"></i></div>' : ''}
                     </div>
                     <span class="text-[10px] font-bold text-slate-300 text-center leading-tight w-full truncate">${item.name}</span>
                 `;
@@ -1796,7 +2052,19 @@ function togglePetFilter(cat, val) {
             });
         }
 
-        function filterGrid() {
+        function filterGrid(event) {
+            // Enter key: select the first non-None item in the grid
+            if (event && event.key === 'Enter') {
+                const grid = document.getElementById('modal-grid');
+                // Find first item-card that is NOT the None tile (no xmark icon)
+                const cards = grid.querySelectorAll('.item-card');
+                for (const card of cards) {
+                    if (card.querySelector('.fa-xmark')) continue; // skip None
+                    card.click();
+                    return;
+                }
+                return;
+            }
             if (currentActiveCategory === 'character') {
                 applyCharacterFilters();
             } else if (currentActiveCategory === 'pet') {
@@ -1838,6 +2106,19 @@ function togglePetFilter(cat, val) {
         }
 
         function selectItem(item) {
+            // ── Multi-select mode: toggle item in set ──
+            if (multiSelectMode) {
+                if (multiSelectedItems.has(item.name)) {
+                    multiSelectedItems.delete(item.name);
+                } else {
+                    multiSelectedItems.add(item.name);
+                }
+                updateMultiSelectBtn();
+                // Re-render to update visual state
+                filterGrid();
+                return;
+            }
+
             if (currentActiveCategory === 'character') {
                 // Clear this character from any other slot first
                 slotData.forEach((slot, i) => {
@@ -1846,6 +2127,9 @@ function togglePetFilter(cat, val) {
                     }
                 });
                 slotData[currentActiveSection].character = item.name;
+                // Reset auto-gear mode when character changes
+                autoGearMode = 'none';
+                updateAutoGearButtons();
             } else if (currentActiveCategory === 'card') {
                 // Clear this card from any other slot first
                 slotData.forEach((slot, i) => {
@@ -1855,16 +2139,43 @@ function togglePetFilter(cat, val) {
                 });
                 slotData[currentActiveSection].card = item.name;
             } else if (currentActiveCategory === 'gear') {
-                // If this gear item is flagged unique, clear it from any other slot's same category
-                const gearEntry = (db[currentGearCategory] || []).find(g => g.name === item.name);
-                if (gearEntry && gearEntry.unique) {
+                // If gear batch mode: apply to ALL matching-class slots
+                if (gearBatchMode) {
+                    const gearEntry = (db[currentGearCategory] || []).find(g => g.name === item.name);
+                    let firstPlaced = false;
                     slotData.forEach((slot, i) => {
-                        if (i !== parseInt(currentActiveSection) && slot.gear[currentGearCategory] === item.name) {
-                            slot.gear[currentGearCategory] = null;
+                        if (!slot.character) return;
+                        const info = getCharInfo(slot.character);
+                        const cls = info.class || '';
+                        if (gearEntry && gearEntry.class && gearEntry.class !== cls) return;
+                        if (gearEntry && gearEntry.excludeClass && gearEntry.excludeClass === cls) return;
+                        // For unique items, only place in first valid slot
+                        if (gearEntry && gearEntry.unique) {
+                            if (firstPlaced) return;
+                            firstPlaced = true;
                         }
+                        slot.gear[currentGearCategory] = item.name;
                     });
+                    gearBatchMode = false;
+                    const btn = document.getElementById('gear-batch-btn');
+                    if (btn) { btn.classList.remove('active'); btn.querySelector('i').style.color=''; btn.querySelector('span').style.color=''; }
+                    const hint = document.getElementById('gear-batch-hint');
+                    if (hint) hint.classList.add('hidden');
+                } else {
+                    // If this gear item is flagged unique, clear it from any other slot's same category
+                    const gearEntry = (db[currentGearCategory] || []).find(g => g.name === item.name);
+                    if (gearEntry && gearEntry.unique) {
+                        slotData.forEach((slot, i) => {
+                            if (i !== parseInt(currentActiveSection) && slot.gear[currentGearCategory] === item.name) {
+                                slot.gear[currentGearCategory] = null;
+                            }
+                        });
+                    }
+                    slotData[currentActiveSection].gear[currentGearCategory] = item.name;
                 }
-                slotData[currentActiveSection].gear[currentGearCategory] = item.name;
+                // If auto gear was set, mark as custom (untoggle)
+                autoGearMode = 'none';
+                updateAutoGearButtons();
             } else if (currentActiveCategory === 'pet') {
                 const slotIndex = parseInt(currentActiveSection.replace('p', '')) - 1;
                 // Clear this pet from any other pet slot first
@@ -1945,6 +2256,15 @@ function togglePetFilter(cat, val) {
             const m = document.getElementById('selection-modal');
             m.style.display = 'none';
             if (gemBatchMode) toggleGemBatch();
+            if (gearBatchMode) {
+                gearBatchMode = false;
+                const btn = document.getElementById('gear-batch-btn');
+                if (btn) { btn.classList.remove('active'); btn.querySelector('i').style.color=''; btn.querySelector('span').style.color=''; }
+                const hint = document.getElementById('gear-batch-hint');
+                if (hint) hint.classList.add('hidden');
+            }
+            multiSelectMode = false;
+            multiSelectedItems.clear();
         }
         
         function setupPetDragDrop() {
@@ -2421,30 +2741,54 @@ function togglePetFilter(cat, val) {
         const maxVal = Math.max(...rows.map(r => r.value));
         const total  = rows.reduce((s, r) => s + r.value, 0);
 
-        barsEl.innerHTML = rows.map((r, i) => {
-            const barPct  = maxVal > 0 ? (r.value / maxVal * 100).toFixed(1) : 0;
-            const isTop   = r.value === maxVal && r.value > 0;
+        // Build display rows: always show 5 bars, one per team slot.
+        // OCR rows come in top-to-bottom screenshot order (highest to lowest damage).
+        // We need to map each OCR row to the correct team slot.
+        // Strategy: assign non-zero OCR rows to slots in descending order (highest damage first),
+        // then pad remaining slots (0 damage) with their character icon.
+        
+        // Count how many non-zero OCR rows we have
+        const nonZeroRows = rows.filter(r => r.value > 0);
+        const nonZeroCount = nonZeroRows.length;
+        
+        // Build 5 display entries - one per team slot (slot index 0..4)
+        // Screenshot order: top bar = highest damage = slot 5 (index 4), going down
+        // But we show all 5 slots in their proper positions, filling zeros as needed.
+        
+        // Map: display position i (0=top of chart) → team slot index
+        // If we have fewer OCR rows than 5, zeros go at the bottom (lower-damage positions)
+        const displayRows = Array.from({ length: 5 }, (_, i) => {
+            // Map screenshot top→bottom to team slots: top=slot5(idx4), bottom=slot1(idx0)
+            const teamSlotIdx = 4 - i;
+            const ocrRow = rows[i]; // OCR row for this display position (may be 0 or undefined)
+            const value = ocrRow ? ocrRow.value : 0;
+            const pct   = ocrRow ? ocrRow.pct   : 0;
+            return { teamSlotIdx, value, pct };
+        });
+
+        barsEl.innerHTML = displayRows.map((entry, i) => {
+            const { teamSlotIdx, value, pct } = entry;
+            const barPct  = maxVal > 0 ? (value / maxVal * 100).toFixed(1) : 0;
+            const isTop   = value === maxVal && value > 0;
             const fill    = isTop ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#4b6bfb,#7c9dff)';
 
-            // Slot mapping: screenshot top bar = slot 5 (index 4), bottom bar = slot 1 (index 0)
-            const slotIdx  = 4 - i;
-            const slotChar = (typeof slotData !== 'undefined' && slotData[slotIdx]) ? slotData[slotIdx].character : null;
+            const slotChar = (typeof slotData !== 'undefined' && slotData[teamSlotIdx]) ? slotData[teamSlotIdx].character : null;
             let iconHtml = '';
             if (slotChar) {
                 const charEntry = (typeof db !== 'undefined' && db.characters) ? db.characters.find(c => c.name === slotChar) : null;
                 if (charEntry && charEntry.img) {
-                    iconHtml = `<img src="${charEntry.img}" class="dmg-char-icon" alt="${slotChar}" title="Slot ${slotIdx+1}: ${slotChar}" onerror="this.outerHTML='<div class=\\'dmg-char-placeholder\\'>${slotIdx+1}</div>'">`;
+                    iconHtml = `<img src="${charEntry.img}" class="dmg-char-icon" alt="${slotChar}" title="Slot ${teamSlotIdx+1}: ${slotChar}" onerror="this.outerHTML='<div class=\\'dmg-char-placeholder\\'>${teamSlotIdx+1}</div>'">`;
                 } else {
-                    iconHtml = `<div class="dmg-char-placeholder" title="${slotChar}">${slotIdx+1}</div>`;
+                    iconHtml = `<div class="dmg-char-placeholder" title="${slotChar}">${teamSlotIdx+1}</div>`;
                 }
             } else {
-                iconHtml = `<div class="dmg-char-placeholder">${slotIdx+1}</div>`;
+                iconHtml = `<div class="dmg-char-placeholder">${teamSlotIdx+1}</div>`;
             }
 
             // Delta vs previous score (only shown after an Update Score)
             let deltaHtml = '';
-            if (bstatPrev && bstatPrev[i] && r.value > 0) {
-                const diff = r.value - bstatPrev[i].value;
+            if (bstatPrev && bstatPrev[i] && value > 0) {
+                const diff = value - bstatPrev[i].value;
                 if (diff > 0) {
                     deltaHtml = `<span style="font-size:9px;color:#34d399;font-weight:700;white-space:nowrap;">
                         <i class="fa-solid fa-arrow-up" style="font-size:8px;"></i> +${diff.toLocaleString()}
@@ -2456,7 +2800,10 @@ function togglePetFilter(cat, val) {
                 }
             }
 
-            return `<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:6px;">
+            // Dimmed style for 0-damage slots
+            const zeroStyle = value === 0 ? 'opacity:0.45;' : '';
+
+            return `<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:6px;${zeroStyle}">
                 <div style="display:flex;align-items:flex-end;gap:8px;">
                     <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
                         ${iconHtml}
@@ -2466,10 +2813,10 @@ function togglePetFilter(cat, val) {
                             <div style="flex:1;height:12px;background:#20222f;border-radius:6px;overflow:hidden;">
                                 <div style="width:${barPct}%;height:100%;background:${fill};border-radius:6px;transition:width 0.7s cubic-bezier(.22,.68,0,1.2);"></div>
                             </div>
-                            <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${r.pct.toFixed(1)}%</span>
+                            <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${value > 0 ? pct.toFixed(1) + '%' : '—'}</span>
                         </div>
                         <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
-                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${r.value > 0 ? r.value.toLocaleString() : '—'}</span>
+                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${value > 0 ? value.toLocaleString() : '—'}</span>
                             ${deltaHtml}
                         </div>
                     </div>
@@ -2616,12 +2963,34 @@ function togglePetFilter(cat, val) {
             });
         }
 
-        // Build the auto-generated filename: SubfolderName_YYYY-MM-DD
+        // Non-raid folders that get title-based filenames instead of date-based
+        const NON_RAID_FOLDERS = new Set([
+            'star', 'brawl', 'abyss', 'stonehenge',
+            'Star', 'Brawl', 'Abyss', 'Stonehenge'
+        ]);
+
+        function isNonRaidFolder(name) {
+            if (!name) return false;
+            return NON_RAID_FOLDERS.has(name) || NON_RAID_FOLDERS.has(name.toLowerCase());
+        }
+
+        // Build the auto-generated filename:
+        // Raid/unknown folders: SubfolderName_YYYY-MM-DD.json
+        // Non-raid folders (Star, Brawl, Abyss, Stonehenge): sanitized-title.json
         function buildFilename(subfolderName) {
             const date = new Date();
             const dateStr = date.getFullYear() + '-'
                 + String(date.getMonth() + 1).padStart(2, '0') + '-'
                 + String(date.getDate()).padStart(2, '0');
+            if (subfolderName && isNonRaidFolder(subfolderName)) {
+                // Use the team title as filename for non-raid folders
+                const title = (_pendingSaveTitle || 'preset')
+                    .replace(/[^a-zA-Z0-9\s_-]/g, '')
+                    .trim()
+                    .replace(/\s+/g, '_')
+                    .substring(0, 40);
+                return (title || 'preset') + '.json';
+            }
             if (subfolderName) {
                 return subfolderName + '_' + dateStr + '.json';
             }
@@ -2905,6 +3274,81 @@ function togglePetFilter(cat, val) {
             dtgRender(dataPoints);
         };
 
+        // ── Raid boss folder whitelist ─────────────────────────────────────
+        const RAID_FOLDERS = new Set([
+            'fenrir', 'vivien', 'morganphysical', 'morganwizard',
+            'morrigan', 'estheria', 'chimera', 'jormungandr',
+            'Fenrir', 'Vivien', 'MorganPhysical', 'MorganWizard',
+            'Morrigan', 'Estheria', 'Chimera', 'Jormumgandr'
+        ]);
+        // Normalize: lowercase, no spaces
+        function isRaidFolder(name) {
+            return RAID_FOLDERS.has(name) || RAID_FOLDERS.has(name.toLowerCase());
+        }
+
+        // ── Load most recent score from each raid folder ───────────────────
+        window.dtgLoadAllRaids = async function () {
+            if (typeof _presetsDir === 'undefined' || !_presetsDir) {
+                alert('Grant folder access first.');
+                return;
+            }
+
+            const countLabel = document.getElementById('dtg-count-label');
+            countLabel.textContent = 'Loading all raids…';
+            document.getElementById('dtg-folder-label').textContent = '/ All Raids';
+
+            const dataPoints = [];
+
+            try {
+                for await (const [folderName, folderHandle] of _presetsDir.entries()) {
+                    if (folderHandle.kind !== 'directory') continue;
+                    if (!isRaidFolder(folderName)) continue;
+
+                    // Collect JSON files from this folder
+                    const files = [];
+                    for await (const [fname, fh] of folderHandle.entries()) {
+                        if (fh.kind === 'file' && fname.endsWith('.json')) files.push({ name: fname, handle: fh });
+                    }
+                    if (files.length === 0) continue;
+                    files.sort((a, b) => a.name.localeCompare(b.name));
+                    // Take only the most recent file
+                    const latest = files[files.length - 1];
+                    try {
+                        const text = await (await latest.handle.getFile()).text();
+                        const preset = JSON.parse(text);
+                        const rows = preset.bstatDealt;
+                        if (!rows || !Array.isArray(rows)) continue;
+                        const total = rows.reduce((s, r) => s + (r.value || 0), 0);
+                        if (total <= 0) continue;
+                        // Use folder name as the label on the graph
+                        const displayName = folderName.replace(/([a-z])([A-Z])/g, '$1 $2');
+                        dataPoints.push({ date: displayName, total, title: displayName });
+                    } catch (_) {}
+                }
+            } catch (e) {
+                countLabel.textContent = 'Error reading folders';
+                return;
+            }
+
+            // Sort by total descending for better readability
+            dataPoints.sort((a, b) => b.total - a.total);
+
+            const n = dataPoints.length;
+            countLabel.textContent = n > 0
+                ? `${n} raid${n !== 1 ? 's' : ''} loaded`
+                : 'No raid data found';
+
+            dtgRender(dataPoints);
+        };
+
+        // Show All Raids button once folder access is granted (check periodically)
+        const _allRaidsWatcher = setInterval(() => {
+            if (typeof _presetsDir !== 'undefined' && _presetsDir) {
+                document.getElementById('dtg-all-raids-btn')?.classList.remove('hidden');
+                clearInterval(_allRaidsWatcher);
+            }
+        }, 500);
+
         // ── Render ─────────────────────────────────────────────────────────
         function dtgRender(pts) {
             const canvas = document.getElementById('dtg-canvas');
@@ -2921,14 +3365,14 @@ function togglePetFilter(cat, val) {
             ph.style.display = 'none';
 
             // ── Layout constants ──
-            const padL = 95, padR = 30, padT = 38, padB = 30;
+            const padL = 95, padR = 30, padT = 38, padB = 40;
             const cW = W - padL - padR;
             const cH = H - padT - padB;
 
             // ── Nice Y-axis max ──
             const rawMax = Math.max(...pts.map(d => d.total));
             const niceMax = niceUp(rawMax * 1.08);
-            const tickCount = 5;
+            const tickCount = 8;
             const tickStep  = niceMax / tickCount;
 
             // ── Coordinate helpers ──
@@ -3340,7 +3784,41 @@ function togglePetFilter(cat, val) {
             </div>
         </div>
 
-        <input type="text" id="modal-search" placeholder="Search by name..." class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-accentBlue mb-4" onkeyup="filterGrid()">
+        <!-- Gear Filters (only show for gear selection) -->
+        <div id="gear-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="filter-label">OPTIONS</span>
+                <button id="gear-batch-btn" onclick="toggleGearBatch()" class="filter-btn flex items-center gap-1.5 px-3" style="width:auto;" title="Apply this gear piece to all characters of the matching class">
+                    <i class="fa-solid fa-layer-group text-slate-400" style="font-size:13px;"></i>
+                    <span class="text-[11px] font-semibold text-slate-400" style="white-space:nowrap;">Batch Equip</span>
+                </button>
+                <span id="gear-batch-hint" class="text-[11px] text-slate-500 italic hidden">— applies to all matching class slots</span>
+                <div class="w-px h-6 bg-slate-700 mx-1 flex-shrink-0"></div>
+                <span class="filter-label">AUTO</span>
+                <button id="auto-gear-off-btn" onclick="toggleAutoGear('offensive')" class="auto-gear-btn" title="Auto-equip offensive preset for all characters">
+                    <i class="fa-solid fa-fire" style="font-size:12px;"></i>
+                    <span>Offensive</span>
+                </button>
+                <button id="auto-gear-def-btn" onclick="toggleAutoGear('defensive')" class="auto-gear-btn" title="Auto-equip defensive preset for all characters">
+                    <i class="fa-solid fa-shield-halved" style="font-size:12px;"></i>
+                    <span>Defensive</span>
+                </button>
+                <span class="text-[10px] text-slate-600 italic ml-1">Presets per class — manual edits will untoggle</span>
+            </div>
+        </div>
+
+        <!-- Multi-select bar (characters, pets, cards) -->
+        <div id="multi-select-bar" class="hidden mb-3 flex items-center gap-2">
+            <button id="multi-select-toggle-btn" onclick="toggleMultiSelect()" class="multi-select-btn">
+                <i class="fa-regular fa-square-check"></i> Multi-Select
+            </button>
+            <button id="multi-select-apply-btn" onclick="applyMultiSelection()" class="hidden bg-[#1e2240] border border-[#4b6bfb] text-blue-300 text-[11px] font-bold py-1.5 px-4 rounded-lg hover:bg-blue-900/40 transition-all">
+                <i class="fa-solid fa-check mr-1"></i>Apply Selection
+            </button>
+            <span class="text-[10px] text-slate-500 italic" id="multi-select-hint">Select multiple items to fill slots at once</span>
+        </div>
+
+        <input type="text" id="modal-search" placeholder="Search by name..." class="w-full bg-[#111218] border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-accentBlue mb-4" onkeyup="filterGrid(event)">
         <div id="modal-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 overflow-y-auto pr-2 pb-4"></div>
     </div>
 </div>
