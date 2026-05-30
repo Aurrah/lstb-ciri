@@ -3277,33 +3277,75 @@ function togglePetFilter(cat, val) {
                 return out;
             }
 
-            // ── Detect explicit zero-damage rows ──
-            // A slot showing exactly 0 damage displays a bare "0" in the screenshot
-            // alongside "0,00%" (or "0.00%"). extractNums ignores values < 1000, so
-            // we count these separately so we can cap the number of non-zero candidates
-            // we accept. This prevents stray numbers from the UI chrome filling slots
-            // that are genuinely zero.
+            // ── Detect zero-damage rows AND their positions in the screenshot ──
+            // A slot showing 0 damage displays "0" alongside "0,00%" / "0.00%".
+            // We build a sequence of tokens (either a damage number or a zero marker)
+            // from each OCR pass so we can reconstruct the full 5-slot positional order
+            // including where zeros sit relative to non-zero values.
             //
-            // Strategy: count how many passes see a standalone "0" row.
-            // A "standalone 0" is a "0" that appears on its own line or adjacent to
-            // a 0,00% / 0.00% percentage token. We count the highest consensus across
-            // passes — if 3+ passes agree there is at least one zero row, we trust it.
+            // Returns an array of length = total rows detected, each entry is either
+            // a numeric value (non-zero damage) or 0 (zero-damage slot), in top→bottom order.
+            function extractPositionalSequence(text) {
+                // Tokenise the raw text line-by-line to find rows containing either
+                // a large damage number OR a zero-damage marker ("0" + "0,00%"/"0.00%").
+                const lines = text.split(/[\n\r]+/);
+                const seq = [];
+                // Patterns for large numbers (same logic as extractNums)
+                const reNum = /(?:\d{1,3}[. ]\d{3}[. ]\d{3}(?:[. ]\d{3})?|\d{1,3},\d{3},\d{3}(?:,\d{3})?|\d{7,13})/;
+                let i = 0;
+                while (i < lines.length) {
+                    const line = lines[i];
+                    // Check for zero-damage row: standalone "0" near a 0,00 or 0.00 percentage
+                    const isZeroRow = /(?:^|[\s])0(?=[\s]|$)/.test(line) &&
+                                      (lines.slice(Math.max(0,i-2), i+3).join(' ').match(/\b0[,.]00\b/));
+                    if (isZeroRow) {
+                        seq.push(0);
+                        i++;
+                        continue;
+                    }
+                    // Check for a large damage number on this line
+                    const numMatch = line.match(reNum);
+                    if (numMatch) {
+                        const cleaned = numMatch[0].replace(/[,. ]/g, '');
+                        const val = parseInt(cleaned, 10);
+                        if (!isNaN(val) && val >= 1000) {
+                            seq.push(val);
+                            i++;
+                            continue;
+                        }
+                    }
+                    i++;
+                }
+                return seq;
+            }
+
+            // Run positional extraction on the three vertical passes (top→bottom canonical)
+            // and vote on the best sequence (most entries, plausible length 1–5).
+            const positionalSeqs = [
+                extractPositionalSequence(r1.data.text),
+                extractPositionalSequence(r2.data.text),
+                extractPositionalSequence(r3.data.text),
+            ].filter(s => s.length >= 1 && s.length <= 5);
+
+            // Pick the sequence with the most entries (most complete read).
+            // Prefer sequences whose length is closest to 5 to get the fullest picture.
+            const bestSeq = positionalSeqs.length > 0
+                ? positionalSeqs.reduce((best, cur) => cur.length >= best.length ? cur : best, positionalSeqs[0])
+                : [];
+
+            // Count zero rows for the nonZeroSlots cap (kept for voting robustness)
             function countZeroRows(text) {
-                // Match "0,00" or "0.00" (percentage marker for a zero row)
                 const zerosPct = (text.match(/\b0[,.]00\b/g) || []).length;
-                // Also match a bare standalone "0" at the start of a line or after whitespace
                 const zerosNum = (text.match(/(?:^|[\n\r\s])0(?=[\s\n\r]|$)/gm) || []).length;
                 return Math.max(zerosPct, zerosNum);
             }
 
             const zeroVotes = allResults.map(r => countZeroRows(r.data.text));
-            // Use the median of the 7 passes to be robust against outliers
             const sortedZV  = [...zeroVotes].sort((a, b) => a - b);
-            const zeroRowCount = sortedZV[Math.floor(sortedZV.length / 2)]; // median
-            // Non-zero slots = 5 minus detected zero rows, clamped 1–5
+            const zeroRowCount = sortedZV[Math.floor(sortedZV.length / 2)];
             const nonZeroSlots = Math.max(1, Math.min(5, 5 - zeroRowCount));
 
-            console.log('[BStats] zero-row votes:', zeroVotes, '→ median:', zeroRowCount, '→ nonZeroSlots:', nonZeroSlots);
+            console.log('[BStats] zero-row votes:', zeroVotes, '→ median:', zeroRowCount, '→ nonZeroSlots:', nonZeroSlots, '→ bestSeq:', bestSeq);
 
             // ── Normalise orientations before voting ──
             // Passes that read the image in reverse row order (P4 bottom→top, P7 flip)
@@ -3340,9 +3382,8 @@ function togglePetFilter(cat, val) {
                 .map(([v]) => v);
 
             // ── Pick top N candidates (capped to nonZeroSlots) ──
-            // This is the key fix: if 1 slot has 0 damage we only take 4 candidates,
-            // not 5 — so the 5th slot stays at 0 instead of being filled with a stray
-            // number the OCR found elsewhere in the screenshot UI.
+            // If 1 slot has 0 damage we only take 4 candidates, not 5 — so the zero
+            // slot stays at 0 instead of being filled with a stray number.
             const topN = candidates.slice(0, nonZeroSlots);
 
             // Restore top→bottom display order using the best vertical pass as reference.
@@ -3370,20 +3411,63 @@ function togglePetFilter(cat, val) {
                 return;
             }
 
-            // ── Build 5 rows — zero slots stay at 0 ──
-            const count     = Math.min(5, topN.length);
-            const sliceNums = topN.slice(0, count);
-            const total     = sliceNums.reduce((s, v) => s + v, 0);
+            // ── Build 5 positional rows — zeros stay at their actual screenshot positions ──
+            //
+            // Strategy: if bestSeq gave us a reliable positional sequence (e.g. [A, 0, B, C, 0])
+            // we map confirmed non-zero topN values into those positions. Otherwise fall back
+            // to the original approach (zeros appended at the end).
+            //
+            // We match each non-zero entry in bestSeq against topN by value; any entry in
+            // bestSeq that is 0 becomes a zero slot at that position.
+            let positionalValues; // length-5 array of damage values in screenshot top→bottom order
 
-            const slicePcts = allPcts.slice(0, count);
-            const pctSum    = slicePcts.reduce((s, v) => s + v, 0);
-            const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
+            // Validate bestSeq: it should contain at least the same non-zero values as topN
+            // (allowing for minor OCR misreads). Count how many topN values appear in bestSeq.
+            const seqNonZero = bestSeq.filter(v => v > 0);
+            const topNSet = new Set(topN);
+            const seqMatchCount = seqNonZero.filter(v => topNSet.has(v)).length;
+            const seqIsReliable = bestSeq.length >= 2 && seqMatchCount >= Math.min(seqNonZero.length, topN.length);
+
+            if (seqIsReliable && bestSeq.length <= 5) {
+                // Use positional sequence from OCR — zeros preserved at their detected positions.
+                // Replace non-zero entries in bestSeq with the voted topN values in order
+                // (topN is already sorted top→bottom) to correct any OCR misreads.
+                let topNIdx = 0;
+                const mapped = bestSeq.map(v => {
+                    if (v === 0) return 0;
+                    // Use the topN value at this non-zero position (most accurate voted value)
+                    return topN[topNIdx++] ?? v;
+                });
+                // Pad or trim to exactly 5 slots
+                if (mapped.length < 5) {
+                    // Append remaining zeros for slots not seen in the screenshot
+                    while (mapped.length < 5) mapped.push(0);
+                }
+                positionalValues = mapped.slice(0, 5);
+            } else {
+                // Fallback: no reliable positional info — put non-zero values at top,
+                // zeros at the bottom (original behaviour).
+                positionalValues = Array.from({ length: 5 }, (_, i) => topN[i] ?? 0);
+            }
+
+            const total = positionalValues.reduce((s, v) => s + v, 0);
+
+            // Assign percentages in positional order
+            // allPcts comes from the best OCR pass in top→bottom order; align to same positions.
+            // We map pcts only to non-zero entries in positional order.
+            const nonZeroPositions = positionalValues.map((v, i) => v > 0 ? i : -1).filter(i => i !== -1);
+            const pctSum = allPcts.slice(0, nonZeroPositions.length).reduce((s, v) => s + v, 0);
+            const usePcts = allPcts.length >= nonZeroPositions.length && Math.abs(pctSum - 100) < 5;
+            let pctIdx = 0;
 
             const rows = Array.from({ length: 5 }, (_, i) => {
-                const value = sliceNums[i] ?? 0;   // slots beyond topN default to 0
-                const pct   = i < count
-                    ? (usePcts ? slicePcts[i] : (total > 0 ? value / total * 100 : 0))
-                    : 0;
+                const value = positionalValues[i];
+                let pct = 0;
+                if (value > 0) {
+                    pct = usePcts
+                        ? (allPcts[pctIdx++] ?? (total > 0 ? value / total * 100 : 0))
+                        : (total > 0 ? value / total * 100 : 0);
+                }
                 return { slot: i + 1, value, pct };
             });
 
@@ -3434,29 +3518,17 @@ function togglePetFilter(cat, val) {
         const maxVal = Math.max(...rows.map(r => r.value));
         const total  = rows.reduce((s, r) => s + r.value, 0);
 
-        // Build display rows: always show 5 bars, one per team slot.
-        // OCR rows come in top-to-bottom screenshot order (highest to lowest damage).
-        // We need to map each OCR row to the correct team slot.
-        // Strategy: assign non-zero OCR rows to slots in descending order (highest damage first),
-        // then pad remaining slots (0 damage) with their character icon.
-        
-        // Count how many non-zero OCR rows we have
-        const nonZeroRows = rows.filter(r => r.value > 0);
-        const nonZeroCount = nonZeroRows.length;
-        
-        // Build 5 display entries - one per team slot (slot index 0..4)
-        // Screenshot order: top bar = highest damage = slot 5 (index 4), going down
-        // But we show all 5 slots in their proper positions, filling zeros as needed.
-        
-        // Map: display position i (0=top of chart) → team slot index
-        // If we have fewer OCR rows than 5, zeros go at the bottom (lower-damage positions)
-        const displayRows = Array.from({ length: 5 }, (_, i) => {
-            // Map screenshot top→bottom to team slots: top=slot5(idx4), bottom=slot1(idx0)
+        // Build display rows: rows[i] is already in top→bottom screenshot order (slot 0 = top).
+        // Each row's index maps directly to team slot index in the same order.
+        // rows[0] = display position 0 (top of chart) = screenshot row 1
+        // rows[4] = display position 4 (bottom) = screenshot row 5
+        // We render them in order: index 0 at top, index 4 at bottom.
+        const displayRows = rows.map((ocrRow, i) => {
+            // teamSlotIdx: map display position to the team slot.
+            // Top of damage chart = highest damage = typically slot 5 (idx 4),
+            // but because zeros may appear anywhere we keep the mapping: display i → team slot 4-i
             const teamSlotIdx = 4 - i;
-            const ocrRow = rows[i]; // OCR row for this display position (may be 0 or undefined)
-            const value = ocrRow ? ocrRow.value : 0;
-            const pct   = ocrRow ? ocrRow.pct   : 0;
-            return { teamSlotIdx, value, pct };
+            return { teamSlotIdx, value: ocrRow.value, pct: ocrRow.pct };
         });
 
         barsEl.innerHTML = displayRows.map((entry, i) => {

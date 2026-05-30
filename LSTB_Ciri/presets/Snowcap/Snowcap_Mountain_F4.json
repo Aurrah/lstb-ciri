@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "title": "Snowcap Mountain F4",
+  "slotData": [
+    {
+      "character": "Erin",
+      "gear": {
+        "Weapon": "Thunderclap",
+        "Armor": "Merlin's Robe",
+        "Helmet": "Tiamat's Signature",
+        "Rune": "Rune Of Focus"
+      },
+      "card": "Circe"
+    },
+    {
+      "character": "Lueira",
+      "gear": {
+        "Weapon": "Fire Dragon's Banner",
+        "Armor": "Merlin's Robe",
+        "Helmet": "Fire Dragon's Helmet",
+        "Rune": "Rune Of Healing"
+      },
+      "card": "Galahad"
+    },
+    {
+      "character": "Maid Rita",
+      "gear": {
+        "Weapon": "Aquarius",
+        "Armor": "Merlin's Robe",
+        "Helmet": "Fire Dragon's Helmet",
+        "Rune": "ThunderHeart"
+      },
+      "card": "Cristina"
+    },
+    {
+      "character": "Morgan Le Fay",
+      "gear": {
+        "Weapon": "Thunderclap",
+        "Armor": "Wild Combat Suit",
+        "Helmet": "Destrutions Favor",
+        "Rune": "Rune Of Focus"
+      },
+      "card": "Tiamat"
+    },
+    {
+      "character": "Galahad",
+      "gear": {
+        "Weapon": "Balisada",
+        "Armor": "Merlin's Robe",
+        "Helmet": "Red Hare",
+        "Rune": "Rune Of Focus"
+      },
+      "card": "Lilith"
+    }
+  ],
+  "petsData": [
+    {
+      "name": "Vivien",
+      "gems": [
+        "emerald-hexagon",
+        "emerald-hexagon",
+        "emerald-hexagon",
+        "emerald-hexagon"
+      ]
+    },
+    {
+      "name": "Yumi",
+      "gems": [
+        "sapphire-hexagon",
+        "sapphire-hexagon",
+        "sapphire-hexagon",
+        "sapphire-hexagon"
+      ]
+    },
+    {
+      "name": "Lohengrin",
+      "gems": [
+        "amethyst-hexagon",
+        "amethyst-hexagon",
+        "amethyst-hexagon",
+        "amethyst-hexagon"
+      ]
+    }
+  ],
+  "formationSlots": [
+    1,
+    3,
+    4,
+    0,
+    2,
+    -1
+  ],
+  "ultimateRotation": [
+    {
+      "character": "Galahad",
+      "time": ""
+    },
+    {
+      "character": "Lueira",
+      "time": ""
+    },
+    {
+      "character": "Erin",
+      "time": ""
+    },
+    {
+      "character": "Morgan Le Fay",
+      "time": "56s"
+    },
+    {
+      "character": "Maid Rita",
+      "time": ""
+    }
+  ],
+  "slotSkinIndex": [
+    0,
+    1,
+    0,
+    2,
+    1
+  ],
+  "bstatDealt": null,
+  "bstatPrev": null
+}
