@@ -1705,7 +1705,33 @@
         };
 
         // Weapon Database with class restrictions
-        const rawWeapons = ['Abyssal Bow', 'Abyssal Greatsword', 'Abyssal Staff', 'Aquarius', 'Arbalest', 'Arguros Toxos', 'Arondight', 'Balisada', 'Claiomh Solais Chaotic', 'Cosmic Axe', 'Death Scythe', 'Demon Blade Hellhad', 'Dragon Buster', 'Dragon Killer', 'Dragon Slayer', 'DualBlade', 'Durendal', 'Failnaught', 'Fire Dragon\'s Banner', 'Fire Dragon\'s Curved Sword', 'Fire Dragon\'s Great Bow', 'Fragarach', 'Gambanteinn', 'Goblin Slasher', 'Goddess Bow', 'Goddess Greatsword', 'Goddess Staff', 'Heavy Bow', 'Holy Fire Bow', 'Holy Fire Staff', 'Holy Fire Sword', 'Infinity Staff', 'Iokheira', 'Rampage Bow', 'Red Dragon Tooth', 'Red Ribboned Bow', 'Red Ribboned Staff', 'Red Ribboned Sword', 'Royal Cow Axe', 'Royal Cow Bowgun', 'Royal Cow Staff', 'Sagittarius', 'Sumarbrander', 'Tempest Bow', 'Tempest Staff', 'Tempest Sword', 'Thunderclap', 'Trident', 'Tyrfingr', 'Void Staff', 'White Feather Fan'];
+        const rawWeapons = [
+            'Abyssal Bow', 'Abyssal Greatsword', 
+            'Abyssal Staff', 'Aquarius', 
+            'Arbalest', 'Arguros Toxos', 
+            'Arondight', 'Balisada', 
+            'Claiomh Solais Chaotic', 'Cosmic Axe', 
+            'Death Scythe', 'Demon Blade Hellhad', 
+            'Dragon Buster', 'Dragon Killer', 
+            'Dragon Slayer', 'DualBlade', 
+            'Durendal', 'Failnaught', 
+            'Fire Dragon\'s Banner', 'Fire Dragon\'s Curved Sword', 
+            'Fire Dragon\'s Great Bow', 'Fragarach', 
+            'Gambanteinn', 'Goblin Slasher', 
+            'Goddess Bow', 'Goddess Greatsword', 
+            'Goddess Staff', 'Heavy Bow', 
+            'Holy Fire Bow', 'Holy Fire Staff', 
+            'Holy Fire Sword', 'Infinity Staff', 
+            'Iokheira', 'Rampage Bow', 
+            'Red Dragon Tooth', 'Red Ribboned Bow', 
+            'Red Ribboned Staff', 'Red Ribboned Sword', 
+            'Royal Cow Axe', 'Royal Cow Bowgun', 
+            'Royal Cow Staff', 'Sagittarius', 
+            'Sumarbrander', 'Tempest Bow', 
+            'Tempest Staff', 'Tempest Sword', 
+            'Thunderclap', 'Trident', 
+            'Tyrfingr', 'Void Staff', 
+            'White Feather Fan'];
 
         const weaponClasses = {
             // Add unique: true to any entry to prevent that item from being equipped on multiple characters.
@@ -1718,7 +1744,7 @@
             'Arguros Toxos': { class: 'Archer' },
             'Arondight': { class: 'Knight' },
             'Balisada': { class: 'Knight', unique: true },
-            'Claiomh Solais Chaotic': { class: 'Wizard' },
+            'Claiomh Solais Chaotic': { class: 'Wizard', unique: true },
             'Cosmic Axe': { class: 'Knight' },
             'Death Scythe': { class: 'Wizard' },
             'Demon Blade Hellhad': { class: 'Knight' },
@@ -1845,15 +1871,16 @@
                 'Tiamat\'s Signature': 'tiamat-signature',
                 'Transformation Scroll': 'transformation-scroll',
                 'Wild Hair Band': 'wild-hair-band',
-                'Destrutions Favor': 'destructions-favor'
+                'Destrutions Favor': 'destructions-favor', 
         };
+        
         const helmetClasses = {
             // Add unique: true to any entry to make that helmet a one-slot-only item.
             // 'Example Helmet': { class: 'Archer', unique: true },
             'Stiletto Of Jealousy': { unique: true },
             'Transformation Scroll': { unique: true },
             'Tiamat\'s Signature': { unique: true },
-            'Red Hare': { unique: true }
+            'Red Hare': { unique: true },
             'Destrutions Favor': { unique: true }
         };
 
