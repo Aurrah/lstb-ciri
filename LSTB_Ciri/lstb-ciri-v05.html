@@ -2750,141 +2750,177 @@ function togglePetFilter(cat, val) {
         document.getElementById('battle-stats-update').classList.add('hidden');
     }
 
-    // ── Main processing pipeline — multi-pass full-image OCR ──
+    // ── Main processing pipeline — 7-pass directional OCR ──
     async function processBStatImage(file) {
         setStatus('Reading image…');
         try {
             const bitmap = await createImageBitmap(file);
             const W = bitmap.width, H = bitmap.height;
 
-            // ── Preprocessing helper ──
-            // Renders the full bitmap onto a canvas with a given contrast/brightness
-            // treatment, upscaled to TARGET width for Tesseract accuracy.
-            function buildCanvas(contrastThreshold, contrastMult) {
-                const TARGET = 1600;
-                const scale  = Math.max(1, TARGET / W);
-                const c = document.createElement('canvas');
-                c.width  = Math.round(W * scale);
-                c.height = Math.round(H * scale);
-                const cx = c.getContext('2d');
-                cx.drawImage(bitmap, 0, 0, W, H, 0, 0, c.width, c.height);
-                const id = cx.getImageData(0, 0, c.width, c.height);
+            // ── Shared grayscale + contrast helper ──
+            // Applied to every canvas after drawing/transforming the bitmap.
+            function applyGray(cx, w, h, threshold, mult) {
+                const id = cx.getImageData(0, 0, w, h);
                 const d  = id.data;
                 for (let i = 0; i < d.length; i += 4) {
                     const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-                    const b = Math.min(255, Math.max(0, (g - contrastThreshold) * contrastMult));
+                    const b = Math.min(255, Math.max(0, (g - threshold) * mult));
                     d[i] = d[i+1] = d[i+2] = b;
                 }
                 cx.putImageData(id, 0, 0);
-                return c;
             }
 
-            // ── Three passes with different contrast treatments ──
-            // Pass 1: gentle (baseline)
-            // Pass 2: stronger contrast — helps faint text
-            // Pass 3: inverted — bright text on dark bg becomes dark on white
-            function buildCanvasInverted() {
-                const TARGET = 1600;
-                const scale  = Math.max(1, TARGET / W);
-                const c = document.createElement('canvas');
-                c.width  = Math.round(W * scale);
-                c.height = Math.round(H * scale);
-                const cx = c.getContext('2d');
-                cx.drawImage(bitmap, 0, 0, W, H, 0, 0, c.width, c.height);
-                const id = cx.getImageData(0, 0, c.width, c.height);
+            // ── Inverted grayscale helper ──
+            function applyGrayInverted(cx, w, h) {
+                const id = cx.getImageData(0, 0, w, h);
                 const d  = id.data;
                 for (let i = 0; i < d.length; i += 4) {
-                    const g = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-                    // Invert: light text on dark bg → dark text on light bg
+                    const g   = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
                     const inv = 255 - g;
                     const b   = Math.min(255, Math.max(0, (inv - 40) * 1.8));
                     d[i] = d[i+1] = d[i+2] = b;
                 }
                 cx.putImageData(id, 0, 0);
+            }
+
+            // ── Generic canvas builder ──
+            // angle: CSS-transform-style rotation in radians (0, π/2, π, 3π/2).
+            // flipX: mirror horizontally before rotation (gives left↔right flip).
+            // flipY: mirror vertically before rotation (gives top↔bottom flip).
+            // After rotation the canvas dimensions are swapped when angle is ±90°.
+            function buildCanvas(angle, flipX, flipY, threshold, mult, inverted) {
+                const TARGET = 1600;
+                // For 90°/270° rotations the output canvas has swapped W/H
+                const rotated90 = Math.abs(Math.round(angle / (Math.PI / 2))) % 2 === 1;
+                const baseScale = rotated90
+                    ? Math.max(1, TARGET / H)   // fit the tallest side to TARGET
+                    : Math.max(1, TARGET / W);
+                const sw = Math.round(W * baseScale);  // source scaled dims
+                const sh = Math.round(H * baseScale);
+                // Output canvas dims after rotation
+                const outW = rotated90 ? sh : sw;
+                const outH = rotated90 ? sw : sh;
+                const c  = document.createElement('canvas');
+                c.width  = outW;
+                c.height = outH;
+                const cx = c.getContext('2d');
+                cx.save();
+                cx.translate(outW / 2, outH / 2);
+                if (flipX) cx.scale(-1,  1);
+                if (flipY) cx.scale( 1, -1);
+                cx.rotate(angle);
+                cx.drawImage(bitmap, 0, 0, W, H, -sw / 2, -sh / 2, sw, sh);
+                cx.restore();
+                cx.setTransform(1, 0, 0, 1, 0, 0);
+                if (inverted) applyGrayInverted(cx, outW, outH);
+                else          applyGray(cx, outW, outH, threshold, mult);
                 return c;
             }
 
-            setStatus('Running OCR (pass 1/3)…');
-            const r1 = await Tesseract.recognize(buildCanvas(50, 1.6), 'eng', {
-                tessedit_char_whitelist: '0123456789.,',
-                tessedit_pageseg_mode: '6',
-            });
-            setStatus('Running OCR (pass 2/3)…');
-            const r2 = await Tesseract.recognize(buildCanvas(30, 2.2), 'eng', {
-                tessedit_char_whitelist: '0123456789.,',
-                tessedit_pageseg_mode: '6',
-            });
-            setStatus('Running OCR (pass 3/3)…');
-            const r3 = await Tesseract.recognize(buildCanvasInverted(), 'eng', {
-                tessedit_char_whitelist: '0123456789.,',
-                tessedit_pageseg_mode: '6',
-            });
+            // ── Run all 7 passes concurrently ──
+            // Each pass sees the image from a different geometric viewpoint, so
+            // Tesseract's text-flow parser encounters rows in a different order.
+            //
+            //  P1 — top → bottom   (normal,       gentle contrast)
+            //  P2 — top → bottom   (high contrast, more aggressive)
+            //  P3 — top → bottom   (inverted,      bright-on-dark UI)
+            //  P4 — bottom → top   (180° rotation — bottom rows become top)
+            //  P5 — left  → right  (90° CW rotation — columns become rows)
+            //  P6 — right → left   (90° CCW rotation — columns become rows, mirrored)
+            //  P7 — bottom → top   (vertical flip — same as P4 but via flipY, no rotation)
+            //       This catches edge cases where 180° rotation and flipY diverge slightly
+            //       due to sub-pixel rounding at extreme screenshot aspect ratios.
 
-            const allText = [r1.data.text, r2.data.text, r3.data.text].join('\n');
-            console.log('[BStats P1]', r1.data.text);
-            console.log('[BStats P2]', r2.data.text);
-            console.log('[BStats P3]', r3.data.text);
+            // Space is included so Tesseract preserves space-separated thousands like
+            // "100 148 693" or "2 622 510 896" (seen in some game localisations).
+            const ocrOpts = { tessedit_char_whitelist: '0123456789., ', tessedit_pageseg_mode: '6' };
+
+            setStatus('Running OCR (1/7 — normal)…');
+            const r1 = await Tesseract.recognize(buildCanvas(0,          false, false, 50,  1.6, false), 'eng', ocrOpts);
+
+            setStatus('Running OCR (2/7 — high contrast)…');
+            const r2 = await Tesseract.recognize(buildCanvas(0,          false, false, 30,  2.4, false), 'eng', ocrOpts);
+
+            setStatus('Running OCR (3/7 — inverted)…');
+            const r3 = await Tesseract.recognize(buildCanvas(0,          false, false, 0,   1.0, true),  'eng', ocrOpts);
+
+            setStatus('Running OCR (4/7 — bottom→top, 180°)…');
+            const r4 = await Tesseract.recognize(buildCanvas(Math.PI,    false, false, 35,  2.0, false), 'eng', ocrOpts);
+
+            setStatus('Running OCR (5/7 — left→right, 90° CW)…');
+            const r5 = await Tesseract.recognize(buildCanvas(Math.PI/2,  false, false, 40,  1.8, false), 'eng', ocrOpts);
+
+            setStatus('Running OCR (6/7 — right→left, 90° CCW)…');
+            const r6 = await Tesseract.recognize(buildCanvas(-Math.PI/2, false, false, 40,  1.8, false), 'eng', ocrOpts);
+
+            setStatus('Running OCR (7/7 — bottom→top, vertical flip)…');
+            const r7 = await Tesseract.recognize(buildCanvas(0,          false, true,  35,  2.0, false), 'eng', ocrOpts);
+
+            const allResults = [r1, r2, r3, r4, r5, r6, r7];
+            allResults.forEach((r, i) => console.log(`[BStats P${i+1}]`, r.data.text));
 
             // ── Number extraction ──
-            // The game uses DOTS as thousand separators: 3.815.702.420
-            // Pattern: dots as thousand separators e.g. 4.555.615.886 or 321.861.840
-            // Also handle comma-separated and plain digit variants.
+            // The game uses different thousand separators depending on locale/device:
+            //   Dots:    3.815.702.420   (most common)
+            //   Spaces:  2 622 510 896   (some localisations)
+            //   Commas:  4,555,615,886   (EN locale fallback)
+            //   None:    100148693       (after OCR strips separators)
+            // We also handle 4-group numbers: 11.379.954.002 (10 digits, valid).
             function extractNums(text) {
-                const out = [];
-                // Greedy dot-separated match — no word boundary on left so we
-                // don't miss a leading single digit like the 4 in 4.555.615.886.
-                // Require at least TWO dot-groups so we don't confuse with decimals.
-                // e.g. 4.555.615.886  →  raw = 4555615886
-                //      321.861.840    →  raw = 321861840
-                //      13.911.077.720 →  raw = 13911077720
-                const reDot = /(?<!\d\.\d{1,2})\d{1,3}(?:\.\d{3}){2,}/g;
+                const seen = new Set();
+                const out  = [];
                 let m;
-                while ((m = reDot.exec(text)) !== null) {
-                    const raw = m[0].replace(/\./g, '');
-                    if (raw.length < 4 || raw.length > 13) continue;
+
+                function addVal(raw) {
+                    if (raw.length < 4 || raw.length > 13) return;
                     const val = parseInt(raw, 10);
-                    if (val >= 1000) out.push(val);
+                    if (val >= 1000 && !seen.has(val)) { seen.add(val); out.push(val); }
                 }
-                // Single dot-group (e.g. 275.996 → only 6 digits total, still valid)
-                const reDotShort = /(?<!\d)\d{1,3}\.\d{3}(?!\d)/g;
-                while ((m = reDotShort.exec(text)) !== null) {
-                    const raw = m[0].replace(/\./g, '');
-                    if (raw.length < 4 || raw.length > 13) continue;
-                    const val = parseInt(raw, 10);
-                    if (val >= 1000) out.push(val);
+
+                // Space-separated: "100 148 693" / "2 622 510 896"
+                const reSpace = /(?<![.\d])\d{1,3}(?: \d{3}){1,4}(?![.\d])/g;
+                while ((m = reSpace.exec(text)) !== null) {
+                    addVal(m[0].replace(/ /g, ''));
                 }
-                // Plain runs of 4+ digits (no separator) as fallback
-                const rePlain = /(?<![.\d])\d{4,13}(?![.\d])/g;
-                while ((m = rePlain.exec(text)) !== null) {
-                    const val = parseInt(m[0], 10);
-                    if (val >= 1000) out.push(val);
+
+                // Dot-separated, any number of groups: 243.351.969 / 11.379.954.002
+                const reDotMulti = /(?<![,\d])\d{1,3}(?:\.\d{3})+(?![.\d])/g;
+                while ((m = reDotMulti.exec(text)) !== null) {
+                    // Skip decimals like "1.56" (only 2 digits after the single dot)
+                    const parts = m[0].split('.');
+                    if (parts.length === 2 && parts[1].length !== 3) continue;
+                    addVal(m[0].replace(/\./g, ''));
                 }
-                // Comma-separated fallback: 4,555,615,886
-                const reComma = /\d{1,3}(?:,\d{3}){2,}/g;
+
+                // Comma-separated: 4,555,615,886
+                const reComma = /(?<![.\d])\d{1,3}(?:,\d{3}){1,4}(?![.\d])/g;
                 while ((m = reComma.exec(text)) !== null) {
-                    const raw = m[0].replace(/,/g, '');
-                    if (raw.length < 4 || raw.length > 13) continue;
-                    const val = parseInt(raw, 10);
-                    if (val >= 1000) out.push(val);
+                    addVal(m[0].replace(/,/g, ''));
                 }
+
+                // Plain digit runs — catches numbers after OCR strips separators
+                // (e.g. spaces collapsed: "100148693", "2622510896")
+                // Floor at 7 digits to avoid false positives from short UI numbers.
+                const rePlain = /(?<![.,\d ])\d{7,13}(?![.,\d])/g;
+                while ((m = rePlain.exec(text)) !== null) {
+                    addVal(m[0]);
+                }
+
                 return out;
             }
 
             // ── Percentage extraction ──
             // The game uses COMMAS as decimal separators: 39,45% or 3,33%
-            // Also handle dot-decimal as fallback.
             function extractPcts(text) {
                 const out = [];
-                // Comma-decimal: 39,45  or  3,33  or  0,85
-                // Require the match is NOT immediately preceded/followed by another digit
-                const reComma = /(?<!\d)\d{1,2},\d{2}(?!\d)/g;
                 let m;
+                // Comma-decimal: 39,45 / 3,33 / 0,85
+                const reComma = /(?<!\d)\d{1,2},\d{2}(?!\d)/g;
                 while ((m = reComma.exec(text)) !== null) {
                     const v = parseFloat(m[0].replace(',', '.'));
                     if (v >= 0.01 && v <= 100) out.push(v);
                 }
-                // Dot-decimal fallback: only match 1-2 digit integers (e.g. 39.45, 5.30)
-                // Exclude anything that looks like a thousand separator (digit.3digits)
+                // Dot-decimal fallback: 39.45 / 5.30
                 const reDot = /(?<!\d)\d{1,2}\.\d{2}(?!\d)/g;
                 while ((m = reDot.exec(text)) !== null) {
                     const v = parseFloat(m[0]);
@@ -2893,15 +2929,56 @@ function togglePetFilter(cat, val) {
                 return out;
             }
 
-            // ── Merge results from all passes ──
-            // Collect numbers from every pass, deduplicate by value,
-            // keep only the top-5 largest (damage rows are sorted high→low in-game).
-            const numsPerPass = [r1, r2, r3].map(r => extractNums(r.data.text));
-            const pctsPerPass = [r1, r2, r3].map(r => extractPcts(r.data.text));
+            // ── Detect explicit zero-damage rows ──
+            // A slot showing exactly 0 damage displays a bare "0" in the screenshot
+            // alongside "0,00%" (or "0.00%"). extractNums ignores values < 1000, so
+            // we count these separately so we can cap the number of non-zero candidates
+            // we accept. This prevents stray numbers from the UI chrome filling slots
+            // that are genuinely zero.
+            //
+            // Strategy: count how many passes see a standalone "0" row.
+            // A "standalone 0" is a "0" that appears on its own line or adjacent to
+            // a 0,00% / 0.00% percentage token. We count the highest consensus across
+            // passes — if 3+ passes agree there is at least one zero row, we trust it.
+            function countZeroRows(text) {
+                // Match "0,00" or "0.00" (percentage marker for a zero row)
+                const zerosPct = (text.match(/\b0[,.]00\b/g) || []).length;
+                // Also match a bare standalone "0" at the start of a line or after whitespace
+                const zerosNum = (text.match(/(?:^|[\n\r\s])0(?=[\s\n\r]|$)/gm) || []).length;
+                return Math.max(zerosPct, zerosNum);
+            }
 
-            // Union all numbers, then pick the 5 that appear in the most passes
-            // (consensus approach — reduces OCR noise).
-            const numVotes = new Map(); // value → pass count
+            const zeroVotes = allResults.map(r => countZeroRows(r.data.text));
+            // Use the median of the 7 passes to be robust against outliers
+            const sortedZV  = [...zeroVotes].sort((a, b) => a - b);
+            const zeroRowCount = sortedZV[Math.floor(sortedZV.length / 2)]; // median
+            // Non-zero slots = 5 minus detected zero rows, clamped 1–5
+            const nonZeroSlots = Math.max(1, Math.min(5, 5 - zeroRowCount));
+
+            console.log('[BStats] zero-row votes:', zeroVotes, '→ median:', zeroRowCount, '→ nonZeroSlots:', nonZeroSlots);
+
+            // ── Normalise orientations before voting ──
+            // Passes that read the image in reverse row order (P4 bottom→top, P7 flip)
+            // will have numbers in reversed sequence — reverse them back so every pass
+            // aligns to the same top→bottom display order before we vote.
+            // Passes P5 and P6 (90° rotations) read columns as rows; the numbers they
+            // find are valid but their sequence may differ from the vertical passes,
+            // so we do NOT pre-reverse them — voting still benefits from their values.
+            const numsPerPass = [
+                extractNums(r1.data.text),                       // P1: top→bottom (canonical)
+                extractNums(r2.data.text),                       // P2: top→bottom hi-contrast
+                extractNums(r3.data.text),                       // P3: top→bottom inverted
+                extractNums(r4.data.text).reverse(),             // P4: 180° → reverse back
+                extractNums(r5.data.text),                       // P5: 90° CW (column scan)
+                extractNums(r6.data.text),                       // P6: 90° CCW (column scan)
+                extractNums(r7.data.text).reverse(),             // P7: flipY → reverse back
+            ];
+            const pctsPerPass = allResults.map(r => extractPcts(r.data.text));
+
+            // ── Consensus voting ──
+            // Each unique value earns 1 vote per pass in which it appears.
+            // A value seen in 4 out of 7 passes is almost certainly real.
+            const numVotes = new Map();
             numsPerPass.forEach(nums => {
                 const seen = new Set();
                 nums.forEach(v => {
@@ -2909,41 +2986,45 @@ function togglePetFilter(cat, val) {
                 });
             });
 
-            // Sort by vote count desc, then by value desc (higher damage first within same votes)
+            // Sort: most votes first; ties broken by largest value (higher damage first).
             let candidates = [...numVotes.entries()]
                 .sort((a, b) => b[1] - a[1] || b[0] - a[0])
                 .map(([v]) => v);
 
-            // The game always shows exactly 5 rows; take top 5 candidates
-            // but re-sort them by the ORDER they appear in pass-1 text (top→bottom)
-            // so bars render in the correct visual order.
-            const top5 = candidates.slice(0, 5);
-            const pass1Nums = numsPerPass[0];
-            top5.sort((a, b) => {
-                const ia = pass1Nums.indexOf(a);
-                const ib = pass1Nums.indexOf(b);
+            // ── Pick top N candidates (capped to nonZeroSlots) ──
+            // This is the key fix: if 1 slot has 0 damage we only take 4 candidates,
+            // not 5 — so the 5th slot stays at 0 instead of being filled with a stray
+            // number the OCR found elsewhere in the screenshot UI.
+            const topN = candidates.slice(0, nonZeroSlots);
+
+            // Restore top→bottom display order using the best vertical pass as reference.
+            const vertPasses = [numsPerPass[0], numsPerPass[1], numsPerPass[2]];
+            const orderedNums = vertPasses.reduce((best, cur) => cur.length > best.length ? cur : best, []);
+
+            topN.sort((a, b) => {
+                const ia = orderedNums.indexOf(a);
+                const ib = orderedNums.indexOf(b);
                 if (ia === -1 && ib === -1) return b - a;
                 if (ia === -1) return 1;
                 if (ib === -1) return -1;
                 return ia - ib;
             });
 
-            // Percentages: take from whichever pass gave the most results
+            // Percentages: use whichever pass returned the most distinct values.
             const pctsBestPass = pctsPerPass.reduce((best, cur) => cur.length > best.length ? cur : best, []);
-            // Deduplicate pcts
             const seenP = new Set();
             const allPcts = pctsBestPass.filter(v => { if (seenP.has(v)) return false; seenP.add(v); return true; });
 
-            console.log('[BStats] top5 nums:', top5, 'pcts:', allPcts, 'votes:', Object.fromEntries(numVotes));
+            console.log('[BStats] topN:', topN, '| pcts:', allPcts, '| votes:', Object.fromEntries(numVotes));
 
-            if (top5.length === 0) {
+            if (topN.length === 0) {
                 setStatus('Could not read numbers — ensure "Damage Dealt" tab is visible');
                 return;
             }
 
-            // ── Step 4: Build 5 rows ──
-            const count     = Math.min(5, top5.length);
-            const sliceNums = top5.slice(0, count);
+            // ── Build 5 rows — zero slots stay at 0 ──
+            const count     = Math.min(5, topN.length);
+            const sliceNums = topN.slice(0, count);
             const total     = sliceNums.reduce((s, v) => s + v, 0);
 
             const slicePcts = allPcts.slice(0, count);
@@ -2951,7 +3032,7 @@ function togglePetFilter(cat, val) {
             const usePcts   = slicePcts.length === count && Math.abs(pctSum - 100) < 5;
 
             const rows = Array.from({ length: 5 }, (_, i) => {
-                const value = sliceNums[i] ?? 0;
+                const value = sliceNums[i] ?? 0;   // slots beyond topN default to 0
                 const pct   = i < count
                     ? (usePcts ? slicePcts[i] : (total > 0 ? value / total * 100 : 0))
                     : 0;
