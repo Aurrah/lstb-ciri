@@ -61,9 +61,11 @@
 
         .slot-squircle { width: 65px; height: 65px; border-radius: 0.5rem; transition: all 0.2s ease; padding: 0 !important; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .slot-squircle:hover { border-color: #4b6bfb; background-color: #2a2d44; }
-        .gear-display, .card-display { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0.25rem; box-sizing: border-box; }
+        .gear-display, .card-display { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
+        .gear-display { padding: 0; }
         .gear-display span, .card-display span { word-break: break-word; text-align: center; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .gear-display img, .card-display img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: -webkit-optimize-contrast; -ms-interpolation-mode: bicubic; }
+        .gear-display img { width: 100%; height: 100%; object-fit: cover; image-rendering: -webkit-optimize-contrast; -ms-interpolation-mode: bicubic; }
+        .card-display img { width: 100%; height: 100%; object-fit: cover; image-rendering: -webkit-optimize-contrast; -ms-interpolation-mode: bicubic; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #16161e; }
         ::-webkit-scrollbar-thumb { background: #4b6bfb; border-radius: 3px; }
@@ -173,6 +175,8 @@
             height: 100%;
             object-fit: cover;
             object-position: top center;
+            image-rendering: -webkit-optimize-contrast;
+            -ms-interpolation-mode: bicubic;
         }
         .ult-char-icon.empty {
             cursor: pointer;
@@ -348,6 +352,7 @@
             gap: 0.75rem;
             min-width: 340px;
             max-width: 420px;
+            flex: 1;
         }
         #battle-stats-upload-zone {
             border: 2px dashed #2d3142;
@@ -386,24 +391,36 @@
         .dmg-value { font-size: 10px; color: #64748b; min-width: 80px; text-align: right; font-variant-numeric: tabular-nums; }
         #battle-stats-total { font-size: 12px; color: #e2e8f0; font-weight: 700; text-align: right; }
         #battle-stats-status { font-size: 10px; color: #64748b; text-align: center; min-height: 14px; }
-        /* Character icon in damage bars */
-        .dmg-char-icon {
-            width: 63px; height: 63px;
+        /* Character icon in damage bars — face crop */
+        .dmg-char-icon-wrap {
+            width: 80px; height: 80px;
             border-radius: 10px;
-            object-fit: cover;
-            object-position: top center;
+            overflow: hidden;
             background: #20222f;
             border: 2px solid #2d3142;
             flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            position: relative;
+        }
+        .dmg-char-icon {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: 50% 8%;
+            image-rendering: -webkit-optimize-contrast;
+            -ms-interpolation-mode: bicubic;
+            display: block;
+            transform: scale(1.25);
+            transform-origin: center 22%;
         }
         .dmg-char-placeholder {
-            width: 63px; height: 63px;
+            width: 80px; height: 80px;
             border-radius: 10px;
             background: #20222f;
             border: 2px solid #2d3142;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: 700; color: #475569;
+            font-size: 20px; font-weight: 700; color: #475569;
             flex-shrink: 0;
         }
 
@@ -412,7 +429,7 @@
             max-width: 7xl;
             margin: 0 auto;
             display: flex;
-            align-items: flex-start;
+            align-items: stretch;
             gap: 1rem;
         }
         #team-grid {
@@ -513,10 +530,10 @@
             <main id="team-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start flex-1 min-w-0"></main>
 
             <!-- Battle Stats + Notes Column -->
-            <div class="flex flex-col gap-3" style="min-width:340px;max-width:420px;">
+            <div class="flex flex-col gap-3" style="min-width:340px;max-width:420px;align-self:stretch;">
 
                 <!-- Battle Stats Panel -->
-                <div id="battle-stats-panel" style="flex:1;">
+                <div id="battle-stats-panel" style="flex:1;display:flex;flex-direction:column;">
                     <div class="text-[12px] text-slate-400 font-semibold tracking-widest uppercase flex items-center gap-2 mb-2">
                         <i class="fa-solid fa-chart-bar text-[#4b6bfb]"></i>
                         Damage Dealt
@@ -537,7 +554,7 @@
                     </div>
 
                     <!-- Bars -->
-                    <div id="battle-stats-bars" class="flex flex-col gap-2 mt-2">
+                    <div id="battle-stats-bars" class="flex flex-col gap-2 mt-2" style="flex:1;justify-content:space-evenly;">
                         <div class="text-center text-[11px] text-slate-600 italic mt-2">No data yet</div>
                     </div>
 
@@ -575,16 +592,20 @@
                         <div class="flex items-start justify-center gap-6">
                             <!-- Pet 1 -->
                             <div class="flex flex-col gap-2">
-                                <div class="flex justify-center w-24">
-                                    <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
+                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
+                                <div class="flex items-end gap-3">
+                                    <div class="flex justify-center w-24">
+                                        <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
+                                    </div>
+                                    <div id="gem-stat-badge-0" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_0_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-start gap-3">
                                     <div class="w-24 h-24 bg-slotBg border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p1', 'pet')" draggable="true" data-pet-idx="0">
                                         <div id="pet-display-p1" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <!-- 2x2 gem grid aligned with top of pet slot -->
                                     <div class="grid grid-cols-2 gap-[6px]">
                                         <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
                                             <span id="gem-p1-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
@@ -604,16 +625,20 @@
                             
                             <!-- Pet 2 -->
                             <div class="flex flex-col gap-2">
-                                <div class="flex justify-center w-24">
-                                    <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
+                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
+                                <div class="flex items-end gap-3">
+                                    <div class="flex justify-center w-24">
+                                        <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
+                                    </div>
+                                    <div id="gem-stat-badge-1" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_1_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-start gap-3">
                                     <div class="w-24 h-24 bg-slotBg border-2 border-orange-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p2', 'pet')" draggable="true" data-pet-idx="1">
                                         <div id="pet-display-p2" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <!-- 2x2 gem grid aligned with top of pet slot -->
                                     <div class="grid grid-cols-2 gap-[6px]">
                                         <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
                                             <span id="gem-p2-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
@@ -633,16 +658,20 @@
                             
                             <!-- Pet 3 -->
                             <div class="flex flex-col gap-2">
-                                <div class="flex justify-center w-24">
-                                    <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
+                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
+                                <div class="flex items-end gap-3">
+                                    <div class="flex justify-center w-24">
+                                        <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
+                                    </div>
+                                    <div id="gem-stat-badge-2" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_2_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-start gap-3">
                                     <div class="w-24 h-24 bg-slotBg border-2 border-red-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p3', 'pet')" draggable="true" data-pet-idx="2">
                                         <div id="pet-display-p3" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 4 gems arranged in a 2x2 grid to the RIGHT -->
+                                    <!-- 2x2 gem grid aligned with top of pet slot -->
                                     <div class="grid grid-cols-2 gap-[6px]">
                                         <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
                                             <span id="gem-p3-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
@@ -829,13 +858,10 @@
 
     <script>
         // State Management
-        let slotData = [
-    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-    { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null }
-        ];
+        function _emptySlot() {
+            return { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null, statPriority: { Weapon: [], Armor: [], Helmet: [], Rune: [] } };
+        }
+        let slotData = [_emptySlot(), _emptySlot(), _emptySlot(), _emptySlot(), _emptySlot()];
         // ── Skin Database — runtime-detected ──────────────────────────────
         // Maps character display name → candidate filenames to probe (up to _03).
         // On first render for each character, we fire off image probes for each
@@ -1096,9 +1122,15 @@
 
         // Independent pets storage - not tied to character slots
         let petsData = [
-            { name: null, gems: [null, null, null, null] },
-            { name: null, gems: [null, null, null, null] },
-            { name: null, gems: [null, null, null, null] }
+            { name: null, gems: [null, null, null, null], gemStat: null },
+            { name: null, gems: [null, null, null, null], gemStat: null },
+            { name: null, gems: [null, null, null, null], gemStat: null }
+        ];
+
+        // Gem stat presets (same 2 options for all pets)
+        const GEM_STAT_PRESETS = [
+            { id: 'gs-2atk2hp', label: '2×ATK/HP', color: '#fb923c', stats: ['ATK','ATK','HP','HP'] },
+            { id: 'gs-2cd2hp',  label: '2×CD/HP',  color: '#f472b6', stats: ['CD','CD','HP','HP'] },
         ];
         // Formation mapping: form-slot-idx -> team slot index (or -1 for empty)
         // Default: Slot 2->Top1, Slot 4->Top2, Slot 5->Top3, Slot 1->Bot1, Slot 3->Bot2, empty->Bot3
@@ -1221,6 +1253,7 @@
     });
     
     setupPetDragDrop();
+    renderAllGemStatBadges();
 }
         function renderTeamGrid() {
             // Validate that all gear is still compatible with their characters
@@ -1236,6 +1269,15 @@
                 section.draggable = true;
                 section.dataset.index = index;
                 section.innerHTML = `
+                    <!-- Off/Def buttons above the character portrait -->
+                    <div class="flex gap-1.5">
+                        <button id="slot-off-btn-${index}" onclick="applySlotAutoGear(${index},'offensive')" title="Auto-equip offensive preset" ${!slot.character ? 'disabled' : ''} style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:${slot.character ? '#475569' : '#2d3142'};cursor:${slot.character ? 'pointer' : 'not-allowed'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;opacity:${slot.character ? '1' : '0.4'};" ${slot.character ? `onmouseover="this.style.borderColor='#ef4444';this.style.color='#f87171'" onmouseout="resetSlotOffBtn(${index})"` : ''}>
+                            <i class="fa-solid fa-fire" style="font-size:9px;"></i>Off
+                        </button>
+                        <button id="slot-def-btn-${index}" onclick="applySlotAutoGear(${index},'defensive')" title="Auto-equip defensive preset" ${!slot.character ? 'disabled' : ''} style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:${slot.character ? '#475569' : '#2d3142'};cursor:${slot.character ? 'pointer' : 'not-allowed'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;opacity:${slot.character ? '1' : '0.4'};" ${slot.character ? `onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa'" onmouseout="resetSlotDefBtn(${index})"` : ''}>
+                            <i class="fa-solid fa-shield-halved" style="font-size:9px;"></i>Def
+                        </button>
+                    </div>
                     <div class="relative bg-slotBg border-2 border-dashed border-slate-700 rounded-lg overflow-hidden flex flex-col items-center justify-center cursor-pointer p-0 h-48 group transition-all hover:border-accentBlue" onclick="openModal('${index}', 'character')">
                         <div id="char-display-${index}" class="w-full h-full">
     ${
@@ -1291,24 +1333,29 @@
 </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2.5">
-                        ${categories.map(cat => `
-                            <div class="slot-squircle bg-slotBg border border-slate-700 flex flex-col items-center justify-center cursor-pointer p-1" onclick="openModal('${index}', 'gear', '${cat}')">
-                                <div id="gear-display-${index}-${cat}" class="gear-display">
-                                    ${slot.gear[cat] ? (() => {
-                                        const gearData = db[cat].find(g => g.name === slot.gear[cat]);
-                                        return gearData ? `<img src="${gearData.img}" alt="${slot.gear[cat]}" class="rounded" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"><span class="text-xs text-slate-200" style="display:none">${slot.gear[cat]}</span>` : `<span class="text-xs text-slate-200">${slot.gear[cat]}</span>`;
-                                    })() : `<span class="text-[10px] text-slate-400 font-mono">${cat}</span>`}
+                        ${categories.map(cat => {
+                            const sp = slot.statPriority?.[cat] || [];
+                            const spLabel = sp.length > 0 ? (() => {
+                                const counts = {};
+                                sp.forEach(x => { counts[x] = (counts[x]||0)+1; });
+                                return Object.entries(counts).map(([s,n]) => n>1?`${n}×${s}`:s).join('/');
+                            })() : '';
+                            const statColors = { ATK:'#fb923c', CD:'#f472b6', IDR:'#a78bfa', HP:'#34d399' };
+                            const firstStat = sp[0] || '';
+                            const badgeColor = statColors[firstStat] || '#4b6bfb';
+                            return `
+                            <div class="flex flex-col gap-0.5">
+                                <div class="slot-squircle bg-slotBg border border-slate-700 flex flex-col items-center justify-center cursor-pointer p-1 relative" onclick="openModal('${index}', 'gear', '${cat}')">
+                                    <div id="gear-display-${index}-${cat}" class="gear-display">
+                                        ${slot.gear[cat] ? (() => {
+                                            const gearData = db[cat].find(g => g.name === slot.gear[cat]);
+                                            return gearData ? `<img src="${gearData.img}" alt="${slot.gear[cat]}" class="rounded" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"><span class="text-xs text-slate-200" style="display:none">${slot.gear[cat]}</span>` : `<span class="text-xs text-slate-200">${slot.gear[cat]}</span>`;
+                                        })() : `<span class="text-[10px] text-slate-400 font-mono">${cat}</span>`}
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="flex gap-1.5 mt-0.5">
-                        <button id="slot-off-btn-${index}" onclick="applySlotAutoGear(${index},'offensive')" title="Auto-equip offensive preset" style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;" onmouseover="this.style.borderColor='#ef4444';this.style.color='#f87171'" onmouseout="resetSlotOffBtn(${index})">
-                            <i class="fa-solid fa-fire" style="font-size:9px;"></i>Off
-                        </button>
-                        <button id="slot-def-btn-${index}" onclick="applySlotAutoGear(${index},'defensive')" title="Auto-equip defensive preset" style="flex:1;height:24px;background:#1a1c28;border:1px solid #2d3142;border-radius:5px;font-size:10px;font-weight:700;color:#475569;cursor:pointer;transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:3px;" onmouseover="this.style.borderColor='#3b82f6';this.style.color='#60a5fa'" onmouseout="resetSlotDefBtn(${index})">
-                            <i class="fa-solid fa-shield-halved" style="font-size:9px;"></i>Def
-                        </button>
+                                <div style="background:#0f111a;border:1px solid ${spLabel ? badgeColor+'55' : '#2d314255'};border-radius:5px;padding:0 4px;text-align:center;font-size:8px;font-weight:800;color:${spLabel ? badgeColor : '#475569'};letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;height:24px;display:flex;align-items:center;justify-content:center;" onclick="openModal('${index}', 'gear', '${cat}')" title="${spLabel ? 'Stat priority: '+spLabel : 'Set stat priority'}">${spLabel || '—'}</div>
+                            </div>`;
+                        }).join('')}
                     </div>
                     <div class="relative bg-slotBg border border-slate-700 rounded-lg h-40 flex flex-col items-center justify-center cursor-pointer overflow-hidden" onclick="openModal('${index}', 'card')">
                         <div id="card-display-${index}" class="card-display w-full h-full">
@@ -1321,7 +1368,7 @@
                     <img 
                         src="${cardData?.img || ''}" 
                         alt="${slot.card}"
-                        class="w-full h-full object-contain"
+                        class="w-full h-full object-cover"
                     >
 
                     <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/80 to-transparent"></div>
@@ -2016,6 +2063,7 @@
 
         // ── Gem batch-select state ────────────────────────────
         let gemBatchMode = false;
+        let gearBatchMode = false;
         // ── Multi-select state ────────────────────────────────
         let multiSelectMode = false;
         let multiSelectedItems = new Set(); // stores item names
@@ -2096,12 +2144,16 @@
         function resetSlotOffBtn(idx) {
             const btn = document.getElementById('slot-off-btn-' + idx);
             if (!btn) return;
+            const hasChar = slotData[idx] && slotData[idx].character;
+            if (!hasChar) { btn.style.borderColor='#2d3142'; btn.style.color='#2d3142'; return; }
             if (slotGearModes[idx] === 'offensive') { btn.style.borderColor='#ef4444'; btn.style.color='#f87171'; }
             else { btn.style.borderColor='#2d3142'; btn.style.color='#475569'; }
         }
         function resetSlotDefBtn(idx) {
             const btn = document.getElementById('slot-def-btn-' + idx);
             if (!btn) return;
+            const hasChar = slotData[idx] && slotData[idx].character;
+            if (!hasChar) { btn.style.borderColor='#2d3142'; btn.style.color='#2d3142'; return; }
             if (slotGearModes[idx] === 'defensive') { btn.style.borderColor='#3b82f6'; btn.style.color='#60a5fa'; }
             else { btn.style.borderColor='#2d3142'; btn.style.color='#475569'; }
         }
@@ -2166,6 +2218,73 @@
                 btn.querySelector('span').style.color = '';
                 hint.classList.add('hidden');
             }
+        }
+
+        // ── Gem stat preset helpers ──────────────────────────
+        let _currentGemPetIdx = null; // which pet (0/1/2) the gem modal is open for
+
+        function setGemStatPreset(id) {
+            if (_currentGemPetIdx === null) return;
+            const preset = GEM_STAT_PRESETS.find(p => p.id === id);
+            if (!preset) return;
+            const current = petsData[_currentGemPetIdx].gemStat;
+            // Toggle off if same preset clicked again
+            if (current && JSON.stringify([...current].sort()) === JSON.stringify([...preset.stats].sort())) {
+                petsData[_currentGemPetIdx].gemStat = null;
+            } else {
+                petsData[_currentGemPetIdx].gemStat = [...preset.stats];
+            }
+            updateGemStatUI(_currentGemPetIdx);
+            renderGemStatBadge(_currentGemPetIdx);
+        }
+
+        function updateGemStatUI(petIdx) {
+            const current = petIdx !== null ? petsData[petIdx].gemStat : null;
+            GEM_STAT_PRESETS.forEach(p => {
+                const btn = document.getElementById(`gspbtn-${p.id}`);
+                if (!btn) return;
+                const isActive = current &&
+                    JSON.stringify([...current].sort()) === JSON.stringify([...p.stats].sort());
+                btn.classList.toggle('active', isActive);
+            });
+        }
+
+        function renderGemStatBadge(petIdx) {
+            const badgeEl = document.getElementById(`gem-stat-badge-${petIdx}`);
+            if (!badgeEl) return;
+            const stat = petsData[petIdx].gemStat;
+            if (!stat || stat.length === 0) {
+                badgeEl.style.background = '#0f111a';
+                badgeEl.style.borderColor = '#2d314255';
+                badgeEl.style.color = '#475569';
+                badgeEl.textContent = '—';
+                return;
+            }
+            // Build label e.g. 2×ATK/HP
+            const counts = {};
+            stat.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
+            const label = Object.entries(counts).map(([s, n]) => n > 1 ? `${n}×${s}` : s).join('/');
+            // Pick a color from the active preset
+            const match = GEM_STAT_PRESETS.find(p =>
+                JSON.stringify([...p.stats].sort()) === JSON.stringify([...stat].sort())
+            );
+            const color = match ? match.color : '#4b6bfb';
+            badgeEl.style.background = '#0f111a';
+            badgeEl.style.borderColor = color + '55';
+            badgeEl.style.color = color;
+            badgeEl.textContent = label;
+        }
+
+        function clearGemStat() {
+            if (_currentGemPetIdx === null) return;
+            petsData[_currentGemPetIdx].gemStat = null;
+            updateGemStatUI(_currentGemPetIdx);
+            renderGemStatBadge(_currentGemPetIdx);
+        }
+
+        // Re-render all 3 gem stat badges (called from renderPets)
+        function renderAllGemStatBadges() {
+            for (let i = 0; i < 3; i++) renderGemStatBadge(i);
         }
 
         // ── Multi-select helpers ──────────────────────────────
@@ -2236,7 +2355,7 @@
                 items.forEach((name, idx) => {
                     if (idx >= 3) return;
                     petsData[idx].name = name;
-                    petsData[idx].gems = [null, null, null, null];
+                    petsData[idx].gems = [null, null, null, null]; petsData[idx].gemStat = null;
                 });
             }
             
@@ -2247,8 +2366,144 @@
             closeModal();
         }
 
-        // ── Gear batch-select state ───────────────────────────
-        let gearBatchMode = false;
+        // ── Gear stat-priority filter ─────────────────────────────
+        // Per-category preset definitions
+        const STAT_PRESETS_BY_CATEGORY = {
+            Weapon: [
+                { id: 'w-4atk',     label: '4×ATK',      color: '#fb923c', stats: ['ATK','ATK','ATK','ATK'] },
+                { id: 'w-4cd',      label: '4×CD',       color: '#f472b6', stats: ['CD','CD','CD','CD'] },
+                { id: 'w-2atk2cd',  label: '2×ATK/CD',   color: '#fbbf24', stats: ['ATK','ATK','CD','CD'] },
+                { id: 'w-4idr',     label: '4×IDR',      color: '#a78bfa', stats: ['IDR','IDR','IDR','IDR'] },
+                { id: 'w-2atk2idr', label: '2×ATK/IDR',  color: '#fbbf24', stats: ['ATK','ATK','IDR','IDR'] },
+                { id: 'w-2cd2idr',  label: '2×CD/IDR',   color: '#fbbf24', stats: ['CD','CD','IDR','IDR'] },
+                { id: 'w-3cd1atk',  label: '3×CD/ATK',   color: '#f472b6', stats: ['CD','CD','CD','ATK'] },
+                { id: 'w-3atk1cd',  label: '3×ATK/CD',   color: '#fb923c', stats: ['ATK','ATK','ATK','CD'] },
+                { id: 'w-3idr1atk', label: '3×IDR/ATK',  color: '#a78bfa', stats: ['IDR','IDR','IDR','ATK'] },
+                { id: 'w-3idr1cd',  label: '3×IDR/CD',   color: '#a78bfa', stats: ['IDR','IDR','IDR','CD'] },
+            ],
+            Armor: [
+                { id: 'a-4cr',      label: '4×CR',       color: '#fb923c', stats: ['CR','CR','CR','CR'] },
+                { id: 'a-4bc',      label: '4×BC',       color: '#60a5fa', stats: ['BC','BC','BC','BC'] },
+                { id: 'a-4hp',      label: '4×HP',       color: '#34d399', stats: ['HP','HP','HP','HP'] },
+                { id: 'a-2cr2bc',   label: '2×CR/BC',    color: '#fbbf24', stats: ['CR','CR','BC','BC'] },
+                { id: 'a-3cr1bc',   label: '3×CR/BC',    color: '#fb923c', stats: ['CR','CR','CR','BC'] },
+                { id: 'a-3bc1cr',   label: '3×BC/CR',    color: '#60a5fa', stats: ['BC','BC','BC','CR'] },
+            ],
+            Helmet: [
+                { id: 'h-4hp',      label: '4×HP',       color: '#34d399', stats: ['HP','HP','HP','HP'] },
+            ],
+            Rune: [
+                { id: 'r-4cd',      label: '4×CD',       color: '#f472b6', stats: ['CD','CD','CD','CD'] },
+                { id: 'r-4hp',      label: '4×HP',       color: '#34d399', stats: ['HP','HP','HP','HP'] },
+                { id: 'r-2cd2hp',   label: '2×CD/HP',    color: '#fbbf24', stats: ['CD','CD','HP','HP'] },
+            ],
+        };
+        // Flat list for backward compat
+        const STAT_PRESETS = Object.values(STAT_PRESETS_BY_CATEGORY).flat();
+        const STAT_OPTIONS = ['ATK','CD','IDR','HP'];
+
+        // Active filter: null = no filter, { stats: [...] } = custom filter
+        let activeStatFilter = null; // { stats: string[] } — the currently active filter
+
+        function statFilterLabel(stats) {
+            if (!stats || stats.length === 0) return '';
+            // Group and count: ['ATK','ATK','CD'] → '2×ATK / CD'
+            const counts = {};
+            stats.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
+            return Object.entries(counts).map(([s, n]) => n > 1 ? `${n}×${s}` : s).join(' / ');
+        }
+
+        function setStatPreset(id) {
+            const preset = STAT_PRESETS.find(p => p.id === id);
+            if (!preset) return;
+            // Toggle: if this preset is already active, clear it
+            const isActive = activeStatFilter &&
+                JSON.stringify([...activeStatFilter.stats].sort()) === JSON.stringify([...preset.stats].sort());
+            if (isActive) {
+                activeStatFilter = null;
+                updateStatFilterUI();
+                applyGearStatFilter();
+                if (currentActiveCategory === 'gear' && currentGearCategory && currentActiveSection !== null) {
+                    saveStatPriorityToSlot(currentActiveSection, currentGearCategory, false);
+                }
+                return;
+            }
+            activeStatFilter = { stats: [...preset.stats] };
+            updateStatFilterUI();
+            applyGearStatFilter();
+            // Auto-save to the current slot immediately
+            if (currentActiveCategory === 'gear' && currentGearCategory && currentActiveSection !== null) {
+                saveStatPriorityToSlot(currentActiveSection, currentGearCategory, false);
+            }
+        }
+
+        function clearStatFilter() {
+            activeStatFilter = null;
+            updateStatFilterUI();
+            applyGearStatFilter();
+        }
+
+        // Render the per-category stat preset buttons into #stat-preset-row
+        function renderStatPresets(gearCat, isUnique) {
+            const row = document.getElementById('stat-preset-row');
+            if (!row) return;
+            const presets = STAT_PRESETS_BY_CATEGORY[gearCat] || [];
+            if (isUnique) {
+                row.innerHTML = `<span class="filter-label" style="min-width:46px;">STAT<br>PRESETS</span>
+                    <span class="text-[10px] text-slate-600 italic flex items-center gap-1"><i class="fa-solid fa-lock" style="font-size:9px;"></i>Unique item — no custom stats</span>`;
+                return;
+            }
+            if (presets.length === 0) {
+                row.innerHTML = `<span class="filter-label" style="min-width:46px;">STAT<br>PRESETS</span>
+                    <span class="text-[10px] text-slate-600 italic">No presets for ${gearCat}</span>`;
+                return;
+            }
+            row.innerHTML = `<span class="filter-label" style="min-width:46px;">STAT<br>PRESETS</span>` +
+                presets.map(p => {
+                    const isActive = activeStatFilter &&
+                        JSON.stringify([...activeStatFilter.stats].sort()) === JSON.stringify([...p.stats].sort());
+                    return `<button id="spbtn-${p.id}" onclick="setStatPreset('${p.id}')" class="filter-btn${isActive ? ' active' : ''}" style="width:auto;padding:3px 8px;" title="${p.label}">
+                        <span style="font-size:10px;font-weight:700;color:${p.color};white-space:nowrap;">${p.label}</span>
+                    </button>`;
+                }).join('');
+        }
+
+        function updateStatFilterUI() {
+            // Preset buttons — highlight active (re-render the row to update state)
+            if (currentGearCategory) {
+                const gearEntry = currentActiveSection !== null && slotData[currentActiveSection]
+                    ? (() => {
+                        const eq = slotData[currentActiveSection]?.gear?.[currentGearCategory];
+                        return eq ? (db[currentGearCategory] || []).find(g => g.name === eq) : null;
+                    })()
+                    : null;
+                renderStatPresets(currentGearCategory, gearEntry?.unique || false);
+            }
+            // Active filter badge removed — preset buttons highlight themselves
+        }
+
+        // Filter gear items by stat priority
+        function applyGearStatFilter() {
+            if (currentActiveCategory !== 'gear') return;
+            const charName = slotData[currentActiveSection]?.character;
+            const charInfo = getCharInfo(charName);
+            const charClass = charInfo.class || '';
+            const gearItems = db[currentGearCategory] || [];
+            let items = charClass ? gearItems.filter(item => (!item.class || item.class === charClass) && item.excludeClass !== charClass) : gearItems;
+            const rawSearch = (document.getElementById('modal-search')?.value || '').toLowerCase();
+            if (rawSearch) items = items.filter(i => i.name.toLowerCase().includes(rawSearch));
+            renderModalGrid(items, false);
+        }
+
+        // Save stat priority to a gear slot
+        function saveStatPriorityToSlot(slotIdx, cat, closeAfter = true) {
+            if (!slotData[slotIdx]) return;
+            if (!slotData[slotIdx].statPriority) slotData[slotIdx].statPriority = { Weapon: [], Armor: [], Helmet: [], Rune: [] };
+            slotData[slotIdx].statPriority[cat] = activeStatFilter ? [...activeStatFilter.stats] : [];
+            renderTeamGrid();
+            if (closeAfter) closeModal();
+        }
+        // ─────────────────────────────────────────────────────────
 
         function toggleGearBatch() {
             gearBatchMode = !gearBatchMode;
@@ -2383,6 +2638,8 @@ function togglePetFilter(cat, val) {
             if (isChar) {
                 resetFilters();
             } else if (isGear) {
+                // Reset stat filter each time modal opens
+                activeStatFilter = null;
                 // For gear, filter by character class
                 const charName = slotData[slotIndex]?.character;
                 const charInfo = getCharInfo(charName);
@@ -2393,11 +2650,20 @@ function togglePetFilter(cat, val) {
                     ? gearItems.filter(item => (!item.class || item.class === charClass) && item.excludeClass !== charClass)
                     : gearItems;
                 renderModalGrid(filteredItems, false);
+                // Check if currently equipped item is unique
+                const equippedName = slotData[slotIndex]?.gear?.[gearCat];
+                const equippedEntry = equippedName ? (db[gearCat] || []).find(g => g.name === equippedName) : null;
+                const isUniqueEquipped = equippedEntry?.unique || false;
+                setTimeout(() => {
+                    renderStatPresets(gearCat, isUniqueEquipped);
+                    updateStatFilterUI();
+                }, 0);
             } else if (type === 'gem') {
                 // For gems, filter by pet's element
                 const match = slotIndex.match(/pet_(\d+)_gem_\d+/);
                 if (match) {
                     const petIdx = parseInt(match[1]);
+                    _currentGemPetIdx = petIdx;
                     const petName = petsData[petIdx].name;
                     const petInfo = getCharInfo(petName);
                     const petElement = petInfo.element || '';
@@ -2406,6 +2672,7 @@ function togglePetFilter(cat, val) {
                         ? gemItems.filter(item => item.element === petElement)
                         : gemItems;
                     renderModalGrid(filteredItems, false);
+                    setTimeout(() => updateGemStatUI(petIdx), 0);
                 }
             } else if (type === 'ultimate') {
                 const teamCharacters = slotData
@@ -2595,10 +2862,13 @@ function togglePetFilter(cat, val) {
                 slotData.forEach((slot, i) => {
                     if (i !== currentActiveSection && slot.character === item.name) {
                         slot.character = null;
+                        slotGearModes[i] = 'none';
                         evictedFrom.push(i);
                     }
                 });
                 slotData[currentActiveSection].character = item.name;
+                // Reset off/def mode for this slot when character changes
+                slotGearModes[currentActiveSection] = 'none';
                 // Reset skin to base when character changes
                 slotSkinIndex[currentActiveSection] = 0;
 
@@ -2648,6 +2918,9 @@ function togglePetFilter(cat, val) {
                             firstPlaced = true;
                         }
                         slot.gear[currentGearCategory] = item.name;
+                        // Save active stat priority to each slot that gets the gear
+                        if (!slot.statPriority) slot.statPriority = { Weapon: [], Armor: [], Helmet: [], Rune: [] };
+                        slot.statPriority[currentGearCategory] = activeStatFilter ? [...activeStatFilter.stats] : (slot.statPriority[currentGearCategory] || []);
                     });
                     gearBatchMode = false;
                     const btn = document.getElementById('gear-batch-btn');
@@ -2665,6 +2938,18 @@ function togglePetFilter(cat, val) {
                         });
                     }
                     slotData[currentActiveSection].gear[currentGearCategory] = item.name;
+                    // Save active stat priority to this slot when gear is selected
+                    if (!slotData[currentActiveSection].statPriority) slotData[currentActiveSection].statPriority = { Weapon: [], Armor: [], Helmet: [], Rune: [] };
+                    if (activeStatFilter && activeStatFilter.stats.length > 0) {
+                        slotData[currentActiveSection].statPriority[currentGearCategory] = [...activeStatFilter.stats];
+                    }
+                    // If unique item selected, clear any active stat filter and re-render presets as disabled
+                    if (item.unique) {
+                        activeStatFilter = null;
+                        renderStatPresets(currentGearCategory, true);
+                        updateStatFilterUI();
+                    }
+                    // (If no stat filter active, keep existing stat priority unchanged)
                 }
                 // If auto gear was set, mark as custom (untoggle)
                 autoGearMode = 'none';
@@ -2679,7 +2964,7 @@ function togglePetFilter(cat, val) {
                 petsData.forEach((pet, i) => {
                     if (i !== slotIndex && pet.name === item.name) {
                         pet.name = null;
-                        pet.gems = [null, null, null, null];
+                        pet.gems = [null, null, null, null]; pet.gemStat = null;
                     }
                 });
                 petsData[slotIndex].name = item.name;
@@ -2729,6 +3014,8 @@ function togglePetFilter(cat, val) {
                 slotData[currentActiveSection].card = null;
                 slotData[currentActiveSection].gear = { Weapon: null, Armor: null, Helmet: null, Rune: null };
                 slotSkinIndex[currentActiveSection] = 0;
+                // Reset off/def mode for this slot
+                slotGearModes[currentActiveSection] = 'none';
                 // Purge from ult rotation — this character is no longer on the team
                 if (removed) {
                     ultimateRotation.forEach(slot => {
@@ -2743,7 +3030,7 @@ function togglePetFilter(cat, val) {
             } else if (currentActiveCategory === 'pet') {
                 const slotIndex = parseInt(currentActiveSection.replace('p', '')) - 1;
                 petsData[slotIndex].name = null;
-                petsData[slotIndex].gems = [null, null, null, null];
+                petsData[slotIndex].gems = [null, null, null, null]; petsData[slotIndex].gemStat = null;
             } else if (currentActiveCategory === 'gem') {
                 const match = currentActiveSection.match(/pet_(\d+)_gem_(\d+)/);
                 if (match) {
@@ -2838,21 +3125,15 @@ function togglePetFilter(cat, val) {
         }
         
         function clearAllSlots() {
-            slotData = [
-                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null },
-                { character: null, gear: { Weapon: null, Armor: null, Helmet: null, Rune: null }, card: null }
-            ];
+            slotData = [_emptySlot(), _emptySlot(), _emptySlot(), _emptySlot(), _emptySlot()];
             petsData = [
-                { name: null, gems: [null, null, null, null] },
-                { name: null, gems: [null, null, null, null] },
-                { name: null, gems: [null, null, null, null] }
+                { name: null, gems: [null, null, null, null], gemStat: null },
+                { name: null, gems: [null, null, null, null], gemStat: null },
+                { name: null, gems: [null, null, null, null], gemStat: null }
             ];
             slotSkinIndex = [0, 0, 0, 0, 0];
             formationSlots = [1, 3, 4, 0, 2, -1];
-            ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
+            ultimateRotation = Array(11).fill().map(() => ({ character: null, time: '' }));
             const titleEl = document.querySelector('h1[contenteditable]');
             if (titleEl) titleEl.innerText = 'My Lost Sword Team';
             renderTeamGrid();
@@ -2867,7 +3148,7 @@ function togglePetFilter(cat, val) {
         setupFormationDragDrop();
 
         // Initialize Ultimate Rotation
-        let ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
+        let ultimateRotation = Array(11).fill().map(() => ({ character: null, time: '' }));
         renderUltimateRotation();
 
         let _ultDragFromIdx = null;
@@ -3050,13 +3331,13 @@ function togglePetFilter(cat, val) {
         }
 
         function addUltimateSlot() {
-            if (ultimateRotation.length >= 11) return;
+            if (ultimateRotation.length >= 12) return;
             ultimateRotation.push({ character: null, time: '' });
             renderUltimateRotation();
         }
 
         function resetUltimateRotation() {
-            ultimateRotation = Array(10).fill().map(() => ({ character: null, time: '' }));
+            ultimateRotation = Array(11).fill().map(() => ({ character: null, time: '' }));
             renderUltimateRotation();
         }
     </script>
@@ -3549,6 +3830,17 @@ function togglePetFilter(cat, val) {
         const maxVal = Math.max(...rows.map(r => r.value));
         const total  = rows.reduce((s, r) => s + r.value, 0);
 
+        // Element → [barColor, glowColor] gradients matching the badge palette
+        const elementBarColors = {
+            Fire:     ['#f97316', '#fb923c'],
+            Frost:    ['#3b82f6', '#60a5fa'],
+            Nature:   ['#22c55e', '#4ade80'],
+            Holy:     ['#eab308', '#fde68a'],
+            Shock:    ['#a855f7', '#c084fc'],
+            Chaos:    ['#ec4899', '#f472b6'],
+            Radiance: ['#ca8a04', '#fcd34d'],
+        };
+
         // Build display rows: rows[i] is already in top→bottom screenshot order (slot 0 = top).
         // Each row's index maps directly to team slot index in the same order.
         // rows[0] = display position 0 (top of chart) = screenshot row 1
@@ -3566,14 +3858,32 @@ function togglePetFilter(cat, val) {
             const { teamSlotIdx, value, pct } = entry;
             const barPct  = maxVal > 0 ? (value / maxVal * 100).toFixed(1) : 0;
             const isTop   = value === maxVal && value > 0;
-            const fill    = isTop ? 'linear-gradient(90deg,#f59e0b,#fbbf24)' : 'linear-gradient(90deg,#4b6bfb,#7c9dff)';
+
+            // Resolve element for this slot's character
+            const slotCharEl = (typeof slotData !== 'undefined' && slotData[teamSlotIdx]?.character)
+                ? (getCharInfo(slotData[teamSlotIdx].character)?.element || '')
+                : '';
+            const elColors = elementBarColors[slotCharEl];
+            const fill = elColors
+                ? `linear-gradient(90deg,${elColors[0]},${elColors[1]})`
+                : isTop
+                    ? 'linear-gradient(90deg,#f59e0b,#fbbf24)'
+                    : 'linear-gradient(90deg,#4b6bfb,#7c9dff)';
 
             const slotChar = (typeof slotData !== 'undefined' && slotData[teamSlotIdx]) ? slotData[teamSlotIdx].character : null;
             let iconHtml = '';
             if (slotChar) {
                 const charEntry = (typeof db !== 'undefined' && db.characters) ? db.characters.find(c => c.name === slotChar) : null;
                 if (charEntry && charEntry.img) {
-                    iconHtml = `<img src="${charEntry.img}" class="dmg-char-icon" style="object-position:${getFacePosition(charEntry.img)};" alt="${slotChar}" title="Slot ${teamSlotIdx+1}: ${slotChar}" onerror="this.outerHTML='<div class=\\'dmg-char-placeholder\\'>${teamSlotIdx+1}</div>'">`;
+                    const facePos = getFacePosition(charEntry.img);
+                    const yPct = facePos.split(' ')[1] || '22%';
+                    const borderColor = elColors ? elColors[0] : '#2d3142';
+                    iconHtml = `<div class="dmg-char-icon-wrap" title="Slot ${teamSlotIdx+1}: ${slotChar}" style="border-color:${borderColor};">` +
+                        `<img src="${charEntry.img}" class="dmg-char-icon" ` +
+                        `style="transform-origin:50% ${yPct};object-position:${facePos};" ` +
+                        `alt="${slotChar}" ` +
+                        `onerror="this.parentElement.outerHTML='<div class=\\'dmg-char-placeholder\\'>${teamSlotIdx+1}</div>'">` +
+                        `</div>`;
                 } else {
                     iconHtml = `<div class="dmg-char-placeholder" title="${slotChar}">${teamSlotIdx+1}</div>`;
                 }
@@ -3599,20 +3909,20 @@ function togglePetFilter(cat, val) {
             // Dimmed style for 0-damage slots
             const zeroStyle = value === 0 ? 'opacity:0.45;' : '';
 
-            return `<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:6px;${zeroStyle}">
-                <div style="display:flex;align-items:flex-end;gap:8px;">
+            return `<div style="display:flex;flex-direction:column;gap:2px;${zeroStyle}">
+                <div style="display:flex;align-items:center;gap:10px;">
                     <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
                         ${iconHtml}
                     </div>
-                    <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;align-self:stretch;">
+                    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;align-self:stretch;">
                         <div style="display:flex;align-items:center;gap:6px;">
-                            <div style="flex:1;height:12px;background:#20222f;border-radius:6px;overflow:hidden;">
-                                <div style="width:${barPct}%;height:100%;background:${fill};border-radius:6px;transition:width 0.7s cubic-bezier(.22,.68,0,1.2);"></div>
+                            <div style="flex:1;height:14px;background:#20222f;border-radius:7px;overflow:hidden;">
+                                <div style="width:${barPct}%;height:100%;background:${fill};border-radius:7px;transition:width 0.7s cubic-bezier(.22,.68,0,1.2);"></div>
                             </div>
-                            <span style="font-size:11px;color:#94a3b8;min-width:42px;text-align:right;font-weight:600;">${value > 0 ? pct.toFixed(1) + '%' : '—'}</span>
+                            <span style="font-size:12px;color:#94a3b8;min-width:46px;text-align:right;font-weight:700;">${value > 0 ? pct.toFixed(1) + '%' : '—'}</span>
                         </div>
                         <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
-                            <span style="font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;">${value > 0 ? value.toLocaleString() : '—'}</span>
+                            <span style="font-size:11px;color:#64748b;font-variant-numeric:tabular-nums;">${value > 0 ? value.toLocaleString() : '—'}</span>
                             ${deltaHtml}
                         </div>
                     </div>
@@ -3902,9 +4212,13 @@ function togglePetFilter(cat, val) {
                     alert('Invalid preset file.'); return;
                 }
                 slotData = preset.slotData;
+                // Backfill statPriority for presets saved before this field existed
+                slotData.forEach(s => { if (!s.statPriority) s.statPriority = { Weapon: [], Armor: [], Helmet: [], Rune: [] }; });
                 petsData = preset.petsData;
+                // Backfill gemStat for presets saved before this field existed
+                petsData.forEach(p => { if (!('gemStat' in p)) p.gemStat = null; });
                 formationSlots = preset.formationSlots;
-                ultimateRotation = preset.ultimateRotation || Array(10).fill().map(() => ({ character: null, time: '' }));
+                ultimateRotation = preset.ultimateRotation || Array(11).fill().map(() => ({ character: null, time: '' }));
                 slotSkinIndex = preset.slotSkinIndex || [0, 0, 0, 0, 0];
                 const titleEl = document.querySelector('h1[contenteditable]');
                 if (titleEl && preset.title) titleEl.innerText = preset.title;
@@ -4376,7 +4690,7 @@ function togglePetFilter(cat, val) {
             const baseZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
 
             // Default render scale — page starts at 90%
-            const DEFAULT_SCALE = 0.9;
+            const DEFAULT_SCALE = 0.92;
 
             function applyZoomLock() {
                 const browserZoom = Math.round((window.outerWidth / window.innerWidth) * 100) / 100 || 1;
@@ -4431,7 +4745,8 @@ function togglePetFilter(cat, val) {
     async function exportCapturePNG() {
         const btn = document.getElementById('export-png-btn');
         const captureEl = document.getElementById('capture-area');
-
+            useCORS: true,      // Forces the browser to request cross-origin data
+            allowTaint: false 
         if (!captureEl || typeof domtoimage === 'undefined') {
             alert('dom-to-image not loaded yet — try again in a moment.');
             return;
@@ -4635,7 +4950,7 @@ function togglePetFilter(cat, val) {
         </div>
 
         <!-- Gem Filters (only show for gem selection) -->
-        <div id="gem-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+        <div id="gem-filters" class="hidden mb-4 pb-3 border-b border-borderCool flex flex-col gap-2">
             <div class="flex items-center gap-2 flex-wrap">
                 <span class="filter-label">OPTIONS</span>
                 <button id="gem-batch-btn" onclick="toggleGemBatch()" class="filter-btn flex items-center gap-1.5 px-3" style="width:auto;" title="Fill all 4 gem slots with the selected gem">
@@ -4644,10 +4959,26 @@ function togglePetFilter(cat, val) {
                 </button>
                 <span id="gem-batch-hint" class="text-[11px] text-slate-500 italic hidden">— next pick fills all 4 slots</span>
             </div>
+            <!-- Gem stat presets -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="filter-label" style="min-width:46px;">STAT<br>PRESETS</span>
+                <button id="gspbtn-gs-2atk2hp" onclick="setGemStatPreset('gs-2atk2hp')" class="filter-btn" style="width:auto;padding:3px 8px;" title="2× ATK / 2× HP">
+                    <span style="font-size:10px;font-weight:700;color:#fb923c;white-space:nowrap;">2×ATK/HP</span>
+                </button>
+                <button id="gspbtn-gs-2cd2hp" onclick="setGemStatPreset('gs-2cd2hp')" class="filter-btn" style="width:auto;padding:3px 8px;" title="2× CD / 2× HP">
+                    <span style="font-size:10px;font-weight:700;color:#f472b6;white-space:nowrap;">2×CD/HP</span>
+                </button>
+                <button onclick="clearGemStat()" style="font-size:10px;font-weight:700;color:#64748b;background:#111218;border:1px solid #2d3142;border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.color='#f87171';this.style.borderColor='#7f1d1d'" onmouseout="this.style.color='#64748b';this.style.borderColor='#2d3142'">
+                    <i class="fa-solid fa-xmark" style="font-size:9px;margin-right:3px;"></i>Clear
+                </button>
+                <span class="text-[10px] text-slate-600 italic ml-1">Saved above gem slots</span>
+            </div>
         </div>
 
         <!-- Gear Filters (only show for gear selection) -->
-        <div id="gear-filters" class="hidden mb-4 pb-3 border-b border-borderCool">
+        <div id="gear-filters" class="hidden mb-3 pb-3 border-b border-borderCool flex flex-col gap-2">
+
+            <!-- Row 1: Batch / Auto -->
             <div class="flex items-center gap-2 flex-wrap">
                 <span class="filter-label">OPTIONS</span>
                 <button id="gear-batch-btn" onclick="toggleGearBatch()" class="filter-btn flex items-center gap-1.5 px-3" style="width:auto;" title="Apply this gear piece to all characters of the matching class">
@@ -4665,8 +4996,14 @@ function togglePetFilter(cat, val) {
                     <i class="fa-solid fa-shield-halved" style="font-size:12px;"></i>
                     <span>Defensive</span>
                 </button>
-                <span class="text-[10px] text-slate-600 italic ml-1">Presets per class — manual edits will untoggle</span>
             </div>
+
+            <!-- Row 2: Stat priority presets — dynamically populated per gear category -->
+            <div id="stat-preset-row" class="flex items-center gap-1.5 flex-wrap">
+                <span class="filter-label" style="min-width:46px;">STAT<br>PRESETS</span>
+                <span class="text-[10px] text-slate-600 italic">Open a gear slot to see options</span>
+            </div>
+
         </div>
 
         <!-- Multi-select bar (characters, pets, cards) -->
