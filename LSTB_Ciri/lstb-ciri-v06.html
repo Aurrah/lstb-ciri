@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.1/src/dom-to-image-more.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script>
         tailwind.config = {
@@ -519,7 +519,7 @@
     </style>
 </head>
 <body class="min-h-screen p-0 m-0" style="overflow-x:hidden;">
-<div id="zoom-lock" class="flex flex-col justify-between p-4" style="min-height:100vh;">
+<div id="zoom-lock" class="flex flex-col p-4 gap-4" style="min-height:100vh;">
 
     <div id="capture-area" class="bg-[#0f111a]">
         <header class="text-center mb-6">
@@ -589,105 +589,106 @@
                         <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Pets</h3>
                         
                         <!-- 3 Pets displayed horizontally with position icons above each -->
-                        <div class="flex items-start justify-center gap-6">
+                        <!-- Gap between pets: 16px (gap-4). Pet slot = 96px, gem gap = 8px, gem grid = 96px. -->
+                        <div class="flex items-start justify-center gap-4">
+
                             <!-- Pet 1 -->
                             <div class="flex flex-col gap-2">
-                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
-                                <div class="flex items-end gap-3">
-                                    <div class="flex justify-center w-24">
+                                <!-- Header row: position icon centred over pet (96px), stat badge centred over gem grid (96px) -->
+                                <div class="flex items-end gap-2">
+                                    <div class="w-24 flex justify-center flex-shrink-0">
                                         <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
                                     </div>
-                                    <div id="gem-stat-badge-0" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_0_gem_0','gem')" title="Gem stat priority — click to change">—</div>
+                                    <div id="gem-stat-badge-0" style="width:96px;height:24px;flex-shrink:0;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_0_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-start gap-3">
+                                <!-- Pet slot + gem grid, same gap-2 (8px) -->
+                                <div class="flex items-start gap-2">
+                                    <!-- Pet slot: 96×96px -->
                                     <div class="w-24 h-24 bg-slotBg border-2 border-blue-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p1', 'pet')" draggable="true" data-pet-idx="0">
                                         <div id="pet-display-p1" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 2x2 gem grid aligned with top of pet slot -->
-                                    <div class="grid grid-cols-2 gap-[6px]">
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
+                                    <!-- Gem grid: 2×2 with 6px gap → each cell = (96-6)/2 = 45px → total = 96px ✓ -->
+                                    <div class="grid grid-cols-2 flex-shrink-0" style="gap:6px;width:96px;height:96px;">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_0', 'gem')">
                                             <span id="gem-p1-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_1', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_1', 'gem')">
                                             <span id="gem-p1-1" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_2', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_2', 'gem')">
                                             <span id="gem-p1-2" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_3', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_0_gem_3', 'gem')">
                                             <span id="gem-p1-3" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Pet 2 -->
                             <div class="flex flex-col gap-2">
-                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
-                                <div class="flex items-end gap-3">
-                                    <div class="flex justify-center w-24">
+                                <div class="flex items-end gap-2">
+                                    <div class="w-24 flex justify-center flex-shrink-0">
                                         <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
                                     </div>
-                                    <div id="gem-stat-badge-1" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_1_gem_0','gem')" title="Gem stat priority — click to change">—</div>
+                                    <div id="gem-stat-badge-1" style="width:96px;height:24px;flex-shrink:0;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_1_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-start gap-3">
+                                <div class="flex items-start gap-2">
                                     <div class="w-24 h-24 bg-slotBg border-2 border-orange-500 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p2', 'pet')" draggable="true" data-pet-idx="1">
                                         <div id="pet-display-p2" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 2x2 gem grid aligned with top of pet slot -->
-                                    <div class="grid grid-cols-2 gap-[6px]">
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
+                                    <div class="grid grid-cols-2 flex-shrink-0" style="gap:6px;width:96px;height:96px;">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_0', 'gem')">
                                             <span id="gem-p2-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_1', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_1', 'gem')">
                                             <span id="gem-p2-1" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_2', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_2', 'gem')">
                                             <span id="gem-p2-2" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_3', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_1_gem_3', 'gem')">
                                             <span id="gem-p2-3" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Pet 3 -->
                             <div class="flex flex-col gap-2">
-                                <!-- Icon row: position icon above pet slot, stat badge above gems -->
-                                <div class="flex items-end gap-3">
-                                    <div class="flex justify-center w-24">
+                                <div class="flex items-end gap-2">
+                                    <div class="w-24 flex justify-center flex-shrink-0">
                                         <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
                                     </div>
-                                    <div id="gem-stat-badge-2" style="width:88px;height:24px;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_2_gem_0','gem')" title="Gem stat priority — click to change">—</div>
+                                    <div id="gem-stat-badge-2" style="width:96px;height:24px;flex-shrink:0;background:#0f111a;border:1px solid #2d314255;border-radius:5px;padding:0 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.03em;line-height:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#475569;" onclick="openModal('pet_2_gem_0','gem')" title="Gem stat priority — click to change">—</div>
                                 </div>
-                                <div class="flex items-start gap-3">
+                                <div class="flex items-start gap-2">
                                     <div class="w-24 h-24 bg-slotBg border-2 border-red-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#252838] transition overflow-hidden flex-shrink-0" style="transform:translateZ(0);-webkit-transform:translateZ(0);" onclick="openModal('p3', 'pet')" draggable="true" data-pet-idx="2">
                                         <div id="pet-display-p3" class="flex items-center justify-center h-full w-full">
                                             <span class="text-xs text-slate-400">+</span>
                                         </div>
                                     </div>
-                                    <!-- 2x2 gem grid aligned with top of pet slot -->
-                                    <div class="grid grid-cols-2 gap-[6px]">
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
+                                    <div class="grid grid-cols-2 flex-shrink-0" style="gap:6px;width:96px;height:96px;">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_0', 'gem')">
                                             <span id="gem-p3-0" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_1', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_1', 'gem')">
                                             <span id="gem-p3-1" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_2', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_2', 'gem')">
                                             <span id="gem-p3-2" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
-                                        <div class="w-10 h-10 bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_3', 'gem')">
+                                        <div class="bg-[#1a1c26] border border-slate-700/50 rounded-md flex items-center justify-center cursor-pointer hover:border-slate-500 transition" onclick="openModal('pet_2_gem_3', 'gem')">
                                             <span id="gem-p3-3" class="text-xs font-bold text-slate-500 leading-none">+</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                     
@@ -695,40 +696,36 @@
                     <div class="flex-1 flex flex-col gap-4">
                         <h3 class="text-[11px] text-slate-500 font-semibold tracking-widest uppercase">Formation</h3>
                         
-                        <!-- Formation rows -->
-                        <div class="flex flex-col gap-1">
+                        <!-- Formation rows — gap-2 (8px) everywhere -->
+                        <div class="flex flex-col gap-2">
                             <!-- TOP row with icons above each slot -->
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-[10px] text-slate-500 font-bold w-8">TOP</span>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Backward">
-                                        <div id="form-slot-0" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="0">-</div>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Center">
-                                        <div id="form-slot-1" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="1">-</div>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80 mb-1" title="Forward">
-                                        <div id="form-slot-2" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="2">-</div>
-                                    </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-500 font-bold w-8 flex-shrink-0">TOP</span>
+                                <div class="flex-1 flex flex-col items-center gap-1">
+                                    <img src="Icons/position_backward.webp" class="w-5 h-5 object-contain opacity-80" title="Backward">
+                                    <div id="form-slot-0" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="0">-</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-1">
+                                    <img src="Icons/position_center.webp" class="w-5 h-5 object-contain opacity-80" title="Center">
+                                    <div id="form-slot-1" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="1">-</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-1">
+                                    <img src="Icons/position_forward.webp" class="w-5 h-5 object-contain opacity-80" title="Forward">
+                                    <div id="form-slot-2" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="2">-</div>
                                 </div>
                             </div>
                             
-                            <!-- BOT row without icons -->
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-[10px] text-slate-500 font-bold w-8">BOT</span>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-3" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="3">-</div>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-4" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="4">-</div>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <div id="form-slot-5" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="5">-</div>
-                                    </div>
+                            <!-- BOT row — same gap-2, no icons (placeholder height keeps alignment) -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-500 font-bold w-8 flex-shrink-0">BOT</span>
+                                <div class="flex-1 flex flex-col items-center" style="padding-top:21px;">
+                                    <div id="form-slot-3" class="form-slot-backward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="3">-</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center" style="padding-top:21px;">
+                                    <div id="form-slot-4" class="form-slot-center w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="4">-</div>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center" style="padding-top:21px;">
+                                    <div id="form-slot-5" class="form-slot-forward w-full bg-[#1a1c26] border border-slate-700/50 rounded-lg h-10 flex items-center justify-center text-slate-300 text-xs transition cursor-grab hover:border-slate-500" draggable="true" data-form-idx="5">-</div>
                                 </div>
                             </div>
                         </div>
@@ -753,7 +750,7 @@
 
     </div>
 
-    <footer id="page-footer" class="max-w-7xl mx-auto w-full mt-4 bg-cardBg border border-borderCool rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl mb-4">
+    <footer id="page-footer" class="max-w-7xl mx-auto w-full bg-cardBg border border-borderCool rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl">
         <div class="text-xs text-slate-400">Layout Engine v3.0 | LSTB Local Directory Mode</div>
         <div class="flex gap-3 flex-wrap justify-end items-center">
             <button id="export-png-btn" class="bg-[#1a1e2e] border border-emerald-700 hover:bg-emerald-900/40 text-emerald-400 text-xs font-semibold py-2 px-4 rounded-lg transition-all flex items-center gap-2" onclick="exportCapturePNG()" title="Export team view as PNG"><i class="fa-solid fa-image"></i>Export PNG</button>
@@ -777,7 +774,7 @@
     </footer>
 
     <!-- ── Damage Timeline Graph ───────────────────────────────────────── -->
-    <div id="dmg-timeline-section" class="max-w-7xl mx-auto w-full mt-0 mb-4 bg-cardBg border border-borderCool rounded-xl p-5 shadow-xl flex flex-col gap-3">
+    <div id="dmg-timeline-section" class="max-w-7xl mx-auto w-full bg-cardBg border border-borderCool rounded-xl p-5 shadow-xl flex flex-col gap-3">
 
         <!-- Header row -->
         <div class="flex items-center justify-between flex-wrap gap-2">
@@ -4736,19 +4733,17 @@ function togglePetFilter(cat, val) {
     </script>
 
     <script>
-    // ── Export PNG via dom-to-image-more ───────────────────────────────────────
-    // dom-to-image-more uses SVG foreignObject to serialize the DOM.
-    // It inlines images as base64 blobs internally — it never calls drawImage()
-    // on a canvas with a cross-origin src, so the tainted-canvas error cannot occur.
-    // Works on file://, fully offline, no server, no browser permissions.
+    // ── Export PNG via html2canvas ─────────────────────────────────────────────
+    // Captures #capture-area at 1:1 scale. Temporarily removes the zoom-lock
+    // transform so html2canvas sees an unscaled layout, then restores it.
 
     async function exportCapturePNG() {
         const btn = document.getElementById('export-png-btn');
         const captureEl = document.getElementById('capture-area');
-            useCORS: true,      // Forces the browser to request cross-origin data
-            allowTaint: false 
-        if (!captureEl || typeof domtoimage === 'undefined') {
-            alert('dom-to-image not loaded yet — try again in a moment.');
+        const zoomLock  = document.getElementById('zoom-lock');
+
+        if (!captureEl || typeof html2canvas === 'undefined') {
+            alert('html2canvas not loaded yet — try again in a moment.');
             return;
         }
 
@@ -4756,22 +4751,31 @@ function togglePetFilter(cat, val) {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rendering…';
         btn.disabled = true;
 
-        try {
-            const scale = 2;
-            const width  = captureEl.scrollWidth;
-            const height = captureEl.scrollHeight;
+        // Snapshot current zoom-lock styles
+        const savedTransform  = zoomLock.style.transform;
+        const savedWidth      = zoomLock.style.width;
+        const savedMinHeight  = zoomLock.style.minHeight;
 
-            const dataUrl = await domtoimage.toPng(captureEl, {
-                bgcolor:  '#0f111a',
-                width:    width  * scale,
-                height:   height * scale,
-                style: {
-                    transform:       `scale(${scale})`,
-                    transformOrigin: 'top left',
-                    width:  width  + 'px',
-                    height: height + 'px',
-                },
+        try {
+            // Temporarily neutralise the transform so html2canvas
+            // sees a 1:1 unscaled layout with correct element positions.
+            zoomLock.style.transform = 'none';
+            zoomLock.style.width     = 'auto';
+            zoomLock.style.minHeight = 'auto';
+
+            // Wait for two paint frames so the browser reflows at scale(1)
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+            const canvas = await html2canvas(captureEl, {
+                useCORS:         true,
+                allowTaint:      true,   // allow local file:// images
+                backgroundColor: '#0f111a',
+                scale:           1,      // 1:1, no scaling
+                logging:         false,
+                imageTimeout:    0,      // no timeout — wait for all images
             });
+
+            const dataUrl = canvas.toDataURL('image/png');
 
             const title = (document.querySelector('h1[contenteditable]')?.innerText?.trim() || 'LSTB_Team')
                 .replace(/[^a-zA-Z0-9\s_-]/g, '').replace(/\s+/g, '_').substring(0, 40) || 'LSTB_Team';
@@ -4796,6 +4800,11 @@ function togglePetFilter(cat, val) {
             alert('Export failed: ' + err.message);
             btn.innerHTML = origHTML;
             btn.disabled  = false;
+        } finally {
+            // Always restore zoom-lock transform
+            zoomLock.style.transform = savedTransform;
+            zoomLock.style.width     = savedWidth;
+            zoomLock.style.minHeight = savedMinHeight;
         }
     }
     </script>
